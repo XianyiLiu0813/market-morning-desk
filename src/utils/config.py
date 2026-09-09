@@ -61,6 +61,7 @@ class Settings:
     llm_temperature: float = 0.2
     email_provider: str = "mock"
     email_subject_prefix: str = "AI Market Morning Desk"
+    email_format: str = "pdf"
     db_path: str = "data/market_morning_desk.db"
     log_level: str = "INFO"
     log_dir: str = "logs"
@@ -138,6 +139,7 @@ def load_settings() -> Settings:
         llm_temperature=float(llm_cfg.get("temperature", 0.2)),
         email_provider=os.environ.get("EMAIL_PROVIDER", email_cfg.get("provider", "mock")),
         email_subject_prefix=email_cfg.get("subject_prefix", "AI Market Morning Desk"),
+        email_format=os.environ.get("EMAIL_FORMAT", email_cfg.get("format", "pdf")),
         db_path=os.environ.get("DATABASE_PATH", db_cfg.get("path", "data/market_morning_desk.db")),
         log_level=os.environ.get("LOG_LEVEL", log_cfg.get("level", "INFO")),
         log_dir=log_cfg.get("dir", "logs"),

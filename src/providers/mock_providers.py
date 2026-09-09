@@ -130,12 +130,18 @@ class MockEmailProvider(EmailProvider):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.last_path: Path | None = None
+        self.last_attachment_paths: list = []
 
-    def send(self, to_addr: str, from_addr: str, subject: str, html_body: str) -> bool:
+    def send(self, to_addr, from_addr, subject, html_body, attachments=None) -> bool:
         ts = now_sgt().strftime("%Y%m%d_%H%M%S")
         path = self.output_dir / f"mock_email_{ts}.html"
         path.write_text(html_body, encoding="utf-8")
         self.last_path = path
+        self.last_attachment_paths = []
+        for att in attachments or []:
+            att_path = self.output_dir / f"mock_email_{ts}_{att.filename}"
+            att_path.write_bytes(att.content)
+            self.last_attachment_paths.append(att_path)
         return True
 
 

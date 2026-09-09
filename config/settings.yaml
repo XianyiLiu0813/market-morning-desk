@@ -64,6 +64,11 @@ llm:
 email:
   provider: "mock"          # mock | resend | smtp        (overridden by EMAIL_PROVIDER env var)
   subject_prefix: "AI Market Morning Desk"
+  # pdf  = short email body + a compact ~3-5 page PDF report attached
+  #        (requires a local Chrome/Chromium install - see src/reports/pdf.py;
+  #        falls back to "html" automatically if Chrome isn't found).
+  # html = full report rendered directly as the email body (no attachment).
+  format: "pdf"              # pdf | html                  (overridden by EMAIL_FORMAT env var)
 
 # --- Database ---
 database:

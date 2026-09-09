@@ -4,8 +4,10 @@
 
 An automated system that collects overnight US/HK market data and news,
 analyzes it macro → market → sector → company → trade implication, teaches
-you how professional investors think, and emails you a compact HTML
-research note every morning before the Hong Kong market opens.
+you how professional investors think, and emails you a compact research
+note every morning before the Hong Kong market opens - by default as a
+3-5 page PDF attachment (a full HTML-email delivery mode is also
+available; see §3).
 
 This is **not** a stock-news aggregator and **not** a trading bot. It never
 places trades. It ranks information aggressively (5–10 minutes of reading),
@@ -30,15 +32,18 @@ python main.py morning --mock --no-email --date 2026-09-09
 This will:
 1. Load mock market data, news, and a macro calendar from `tests/fixtures/`.
 2. Run the full collection → dedup → scoring → LLM analysis → rendering pipeline.
-3. Save the finished HTML report to `outbox/morning_report_2026-09-09.html`.
+3. Render a compact PDF report and save it to `outbox/morning_report_2026-09-09.pdf`
+   (falls back to `.html` automatically if no local Chrome/Chromium install is found -
+   see §3).
 4. Persist everything to a local SQLite database at `data/market_morning_desk.db`.
 
-Open `outbox/morning_report_2026-09-09.html` in a browser to see a complete
-sample report (regime call, market dashboard, sector/theme map, 5 top
-stories, company radar, 0–3 trade ideas, macro risk calendar, "Learn One
-Thing Today", terminology, and full source citations).
+Open the PDF to see a complete sample report (regime call, market
+dashboard, sector/theme map, 5 top stories, company radar, 0–3 trade
+ideas, macro risk calendar, "Learn One Thing Today", terminology, and
+full source citations) - typically 4-5 pages.
 
-Run the test suite (57 tests, all offline/mocked):
+Run the test suite (62 tests, all offline/mocked - PDF-specific tests
+auto-skip if Chrome isn't installed):
 
 ```bash
 python -m pytest tests/ -v
@@ -65,35 +70,50 @@ pipeline never crashes for a missing *optional* key.
 
 ---
 
-## 3. Sending yourself a real test email
+## 3. PDF vs HTML delivery, and sending yourself a real test email
 
-1. Copy `.env.example` to `.env` and fill in:
+**Delivery format** is controlled by `EMAIL_FORMAT` (or `config/settings.yaml`
+`email.format`):
+- `pdf` (**default**) - a short notification email with a compact ~3-5 page
+  PDF attached (`src/reports/templates/morning_pdf.html`, rendered via a
+  local headless Chrome/Chromium install - no extra Python package needed).
+  If no Chrome/Chromium install is found, this **automatically falls back
+  to `html`** so the pipeline never crashes for a missing browser (set
+  `CHROME_PATH` to point at a specific binary if auto-detection doesn't
+  find yours).
+- `html` - the full report rendered directly as the email body (no
+  attachment) - the original long-form layout.
+
+**Simplest real setup (Gmail, no third-party email service signup):**
+
+1. Turn on 2-Step Verification at https://myaccount.google.com/security,
+   then generate an App Password at https://myaccount.google.com/apppasswords
+   (choose "Mail"). This 16-character password is what SMTP uses - **not**
+   your normal Gmail password.
+2. Copy `.env.example` to `.env` and fill in:
    ```
    MOCK_MODE=false
    EMAIL_TO=you@example.com
-   EMAIL_FROM=morning-desk@yourdomain.com
-   EMAIL_PROVIDER=resend
-   RESEND_API_KEY=re_xxx...
+   EMAIL_FROM=you@example.com
+   EMAIL_PROVIDER=smtp
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_USERNAME=you@example.com
+   SMTP_PASSWORD=<16-character app password>
    ```
-   (Get a free Resend API key at https://resend.com - verify a sending
-   domain, or use their shared test sender for a quick check.)
-2. Run:
+3. Test with mock market/news data first (fastest way to confirm email
+   deliverability without wiring up real data providers):
    ```bash
-   python main.py morning --mock          # keep MOCK_MODE for data, but...
-   # ...or, to send a REAL email using mock market/news data (fastest way
-   # to test email deliverability without wiring up all real data providers):
-   EMAIL_PROVIDER=resend MOCK_MODE=true EMAIL_TO=you@example.com python main.py morning --mock
+   python main.py morning --mock --date 2026-09-09
    ```
-   The `EMAIL_TO`/`EMAIL_PROVIDER`/`RESEND_API_KEY` env vars are read
-   independently of `MOCK_MODE`, so you can test real email delivery with
-   mock data, or real data with a mock (file-written) email - mix and match
-   while you wire things up incrementally.
-3. Without `EMAIL_TO` set, the pipeline still runs fully and saves the
-   report HTML to `outbox/` - it just skips the send step (logged, not an
-   error) so you're never blocked from generating a report.
+   Check your inbox for a short email with the PDF attached.
+4. Without `EMAIL_TO` set, the pipeline still runs fully and saves the
+   report (PDF or HTML) to `outbox/` - it just skips the send step (logged,
+   not an error) so you're never blocked from generating a report.
 
-**SMTP fallback**: set `EMAIL_PROVIDER=smtp` and `SMTP_HOST` /
-`SMTP_PORT` / `SMTP_USERNAME` / `SMTP_PASSWORD` instead of Resend.
+**Resend** (needs a signup + API key, but nicer deliverability/analytics
+for production use): set `EMAIL_PROVIDER=resend` and `RESEND_API_KEY` instead
+of the `SMTP_*` vars.
 
 ---
 
@@ -214,11 +234,38 @@ end-to-end and produces a complete report without any of them.
 
 ## 9. Scheduling
 
-### Option A — GitHub Actions (recommended, needs no server)
+### Option A — Local cron (simplest: zero accounts, zero GitHub repo)
+
+If your machine is already Asia/Singapore time (or the same UTC+8 offset,
+e.g. mainland China's Asia/Shanghai), this needs no timezone conversion at
+all - just run:
+
+```bash
+crontab -e
+```
+
+and add:
+
+```cron
+# Asia/Singapore 07:30 local time, every weekday
+30 7 * * 1-5 cd /path/to/market-morning-desk && /path/to/.venv/bin/python main.py morning >> logs/cron.log 2>&1
+```
+
+The only requirement: the machine needs to be on and **not asleep** at
+07:30 every morning (a laptop that's closed/sleeping will simply miss that
+day's run - it does not queue up and fire late). This is the recommended
+starting point if you don't want to deal with GitHub/API-key setup - PDF
+generation (Chrome) and everything else already runs locally with no
+extra accounts needed beyond the one email-sending credential (§3).
+
+### Option B — GitHub Actions (needs a GitHub repo, but doesn't depend on your machine being on)
 
 See `.github/workflows/morning.yml`. It triggers at `30 23 * * *` UTC,
 which is **07:30 Asia/Singapore** (GitHub Actions cron is always UTC;
-Singapore has no DST so this offset is constant: SGT = UTC+8).
+Singapore has no DST so this offset is constant: SGT = UTC+8). Note GitHub
+Actions runners don't have Chrome pre-installed, so `EMAIL_FORMAT=html` is
+the simpler choice there unless you add a Chrome-install step to the
+workflow.
 
 Set repository secrets: `EMAIL_TO`, `EMAIL_FROM`, `EMAIL_PROVIDER`,
 `RESEND_API_KEY` (or `SMTP_*`), `LLM_PROVIDER`, `LLM_MODEL`,
@@ -228,15 +275,6 @@ Set repository secrets: `EMAIL_TO`, `EMAIL_FROM`, `EMAIL_PROVIDER`,
 You can also trigger it manually from the Actions tab
 (`workflow_dispatch`), optionally forcing `MOCK_MODE=true` or a specific
 `--date`.
-
-### Option B — Local cron (personal machine always on before market open)
-
-```cron
-# Asia/Singapore 07:30 local time, every weekday
-30 7 * * 1-5 cd /path/to/market-morning-desk && /path/to/.venv/bin/python main.py morning >> logs/cron.log 2>&1
-```//
-(Use your system's actual local timezone in the cron time if it isn't
-already Asia/Singapore - `crontab` uses the machine's local TZ.)
 
 ### Option C — In-process blocking scheduler
 

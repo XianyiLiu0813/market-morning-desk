@@ -1,12 +1,15 @@
 """Real EmailProvider implementations: Resend (primary) and SMTP (fallback)."""
 from __future__ import annotations
 
+import base64
 import logging
 import smtplib
+from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import List, Optional
 
-from src.providers.email_base import EmailProvider
+from src.providers.email_base import EmailAttachment, EmailProvider
 from src.utils.retry import retry_with_backoff
 
 logger = logging.getLogger("morning_desk")
@@ -19,19 +22,35 @@ class ResendEmailProvider(EmailProvider):
         self.api_key = api_key
 
     @retry_with_backoff(max_attempts=3)
-    def send(self, to_addr: str, from_addr: str, subject: str, html_body: str) -> bool:
+    def send(
+        self,
+        to_addr: str,
+        from_addr: str,
+        subject: str,
+        html_body: str,
+        attachments: Optional[List[EmailAttachment]] = None,
+    ) -> bool:
         try:
             import resend
 
             resend.api_key = self.api_key
-            resend.Emails.send(
-                {
-                    "from": from_addr,
-                    "to": [to_addr],
-                    "subject": subject,
-                    "html": html_body,
-                }
-            )
+            payload = {
+                "from": from_addr,
+                "to": [to_addr],
+                "subject": subject,
+                "html": html_body,
+            }
+            if attachments:
+                # Resend expects base64-encoded content per attachment.
+                # https://resend.com/docs/api-reference/emails/send-email#body-parameters
+                payload["attachments"] = [
+                    {
+                        "filename": att.filename,
+                        "content": base64.b64encode(att.content).decode("ascii"),
+                    }
+                    for att in attachments
+                ]
+            resend.Emails.send(payload)
             return True
         except Exception as exc:  # noqa: BLE001
             logger.error("Resend email send failed: %s", exc)
@@ -48,15 +67,30 @@ class SmtpEmailProvider(EmailProvider):
         self.password = password
         self.use_tls = use_tls
 
-    def send(self, to_addr: str, from_addr: str, subject: str, html_body: str) -> bool:
+    def send(
+        self,
+        to_addr: str,
+        from_addr: str,
+        subject: str,
+        html_body: str,
+        attachments: Optional[List[EmailAttachment]] = None,
+    ) -> bool:
         try:
-            msg = MIMEMultipart("alternative")
+            msg = MIMEMultipart("mixed")
             msg["Subject"] = subject
             msg["From"] = from_addr
             msg["To"] = to_addr
-            msg.attach(MIMEText(html_body, "html"))
 
-            with smtplib.SMTP(self.host, self.port, timeout=15) as server:
+            body_part = MIMEMultipart("alternative")
+            body_part.attach(MIMEText(html_body, "html"))
+            msg.attach(body_part)
+
+            for att in attachments or []:
+                part = MIMEApplication(att.content, Name=att.filename)
+                part["Content-Disposition"] = f'attachment; filename="{att.filename}"'
+                msg.attach(part)
+
+            with smtplib.SMTP(self.host, self.port, timeout=30) as server:
                 if self.use_tls:
                     server.starttls()
                 if self.username:

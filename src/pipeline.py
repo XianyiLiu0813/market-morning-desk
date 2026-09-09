@@ -8,6 +8,8 @@ and Section 47 acceptance criteria. `main.py` is a thin CLI wrapper around
 from __future__ import annotations
 
 import logging
+import os
+import tempfile
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 
@@ -206,8 +208,29 @@ def run_morning_pipeline(
         source_index=source_index,
     )
 
-    # 10. Render HTML
+    # 10. Render HTML (+ compact PDF if that's the configured delivery format)
     html = render_report(report)
+
+    pdf_bytes: Optional[bytes] = None
+    if settings.email_format == "pdf":
+        try:
+            from src.reports.pdf import ChromeNotFoundError, html_to_pdf
+            from src.reports.renderer import render_report_pdf_html
+
+            pdf_html = render_report_pdf_html(report)
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp_pdf:
+                tmp_pdf_path = tmp_pdf.name
+            html_to_pdf(pdf_html, tmp_pdf_path)
+            with open(tmp_pdf_path, "rb") as f:
+                pdf_bytes = f.read()
+            os.unlink(tmp_pdf_path)
+            logger.info("PDF report rendered (%d bytes)", len(pdf_bytes))
+        except ChromeNotFoundError as exc:
+            logger.warning("PDF delivery requested but unavailable, falling back to HTML email: %s", exc)
+            failures.append(f"pdf_generation_unavailable: {exc}")
+        except Exception as exc:  # noqa: BLE001
+            logger.error("PDF generation failed, falling back to HTML email: %s", exc)
+            failures.append(f"pdf_generation_failed: {exc}")
 
     # 11. Persist (upsert on run_date so re-running the same date - e.g. a
     # manual re-run or a retried scheduled job - overwrites rather than
@@ -334,17 +357,26 @@ def run_morning_pipeline(
     if send_email:
         email_provider = build_email_provider(settings)
         providers_used["email"] = email_provider.name
-        success = send_morning_email(email_provider, settings, run_date, html)
+        success = send_morning_email(
+            email_provider, settings, run_date, html,
+            pdf_bytes=pdf_bytes,
+            pdf_filename=f"morning_desk_{run_date}.pdf",
+            summary=report.one_sentence_summary,
+        )
         email_status = "sent" if success else "failed"
         email_path = getattr(email_provider, "last_path", None)
     else:
-        # Still write the HTML to the outbox for inspection even when not sending.
+        # Still write the report to the outbox for inspection even when not sending.
         from pathlib import Path
 
         out = Path(output_dir)
         out.mkdir(parents=True, exist_ok=True)
-        email_path = out / f"morning_report_{run_date}.html"
-        email_path.write_text(html, encoding="utf-8")
+        if pdf_bytes is not None:
+            email_path = out / f"morning_report_{run_date}.pdf"
+            email_path.write_bytes(pdf_bytes)
+        else:
+            email_path = out / f"morning_report_{run_date}.html"
+            email_path.write_text(html, encoding="utf-8")
 
     with get_session() as session:
         from sqlalchemy import select

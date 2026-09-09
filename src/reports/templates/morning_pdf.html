@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Market Morning Desk — {{ report.run_date }}</title>
+<style>
+  @page { size: A4; margin: 14mm 13mm 16mm 13mm; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; color:#1a1d23; font-size:8.6pt; line-height:1.38; }
+  h1,h2,h3,p,ul,ol { margin:0; }
+  .header { display:flex; justify-content:space-between; align-items:baseline; border-bottom:2px solid #0f1720; padding-bottom:6px; margin-bottom:10px; }
+  .header .brand { font-size:14pt; font-weight:800; color:#0f1720; }
+  .header .sub { font-size:7.6pt; color:#6b7280; }
+  .header .meta { text-align:right; font-size:7.6pt; color:#6b7280; }
+  .section { margin-bottom:9px; }
+  .section-title { font-size:8pt; font-weight:800; text-transform:uppercase; letter-spacing:0.6px; color:#0f1720; border-bottom:1px solid #d7dae0; padding-bottom:2px; margin-bottom:5px; page-break-after:avoid; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; }
+  /* CSS grid stretches every cell in a row to match the tallest cell in
+     that row - fine for the roughly-uniform-height cards used elsewhere,
+     but disastrous for the dashboard's variable-height per-group tables
+     (a 20-row ETF table next to a 2-row Hong Kong table would otherwise
+     leave a huge blank gap under the short one). Multi-column flow lets
+     each table keep its own natural height instead. */
+  .dash-columns { column-count:3; column-gap:12px; }
+  .dash-columns table.dash { break-inside:avoid; margin-bottom:6px; width:100%; }
+  .card { background:#f7f8fa; border:1px solid #e4e6ea; border-radius:4px; padding:6px 8px; margin-bottom:5px; page-break-inside:avoid; }
+  .card:last-child { margin-bottom:0; }
+  .item-title { font-size:8.4pt; font-weight:700; color:#0f1720; margin-bottom:2px; }
+  .label { font-size:6.6pt; font-weight:800; text-transform:uppercase; letter-spacing:0.4px; color:#6b7280; margin-top:3px; }
+  .label:first-of-type { margin-top:0; }
+  .badge { display:inline-block; font-size:6.6pt; font-weight:800; letter-spacing:0.3px; text-transform:uppercase; padding:1.5px 5px; border-radius:3px; margin-right:4px; }
+  .badge-bullish { background:#e6f4ea; color:#1e7e34; }
+  .badge-bearish { background:#fbeaea; color:#b3261e; }
+  .badge-neutral { background:#eef0f3; color:#4a4f57; }
+  table.dash { width:100%; border-collapse:collapse; font-size:7.4pt; }
+  table.dash th { text-align:left; font-size:6.6pt; text-transform:uppercase; color:#6b7280; border-bottom:1px solid #d7dae0; padding:2px 3px; }
+  table.dash td { padding:1.6px 3px; border-bottom:1px solid #eef0f2; }
+  table.dash td.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .pos { color:#1e7e34; font-weight:700; }
+  .neg { color:#b3261e; font-weight:700; }
+  .group-hdr td { font-weight:800; font-size:6.6pt; text-transform:uppercase; color:#0f1720; padding-top:4px; }
+  ul.tight { margin:0; padding-left:12px; }
+  ul.tight li { margin-bottom:1.5px; }
+  .risk-box { background:#fff8ec; border:1px solid #f2e0b8; border-radius:4px; padding:5px 7px; font-size:8pt; color:#7a5b12; margin-top:5px; }
+  .no-trade { background:#eef0f3; border:1px dashed #c7cbd1; border-radius:4px; padding:8px; text-align:center; font-size:8pt; font-weight:700; color:#4a4f57; }
+  .footer { margin-top:8px; padding-top:5px; border-top:1px solid #d7dae0; font-size:6.4pt; color:#8a8f98; line-height:1.4; }
+  .risk-cal td { font-size:7.2pt; }
+  .term-name { font-weight:700; }
+  .page-break { page-break-before:always; }
+  .theme-card { border-left:3px solid #c7cbd1; }
+  .theme-card.bull { border-left-color:#1e7e34; }
+  .theme-card.bear { border-left-color:#b3261e; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="brand">AI Market Morning Desk</div>
+    <div class="sub">Market Intelligence &amp; Trading Tutor</div>
+  </div>
+  <div class="meta">
+    {{ report.run_date }}<br>
+    Generated {{ report.generated_at | sgt("%H:%M %Z") }} · {{ report.timezone }}
+  </div>
+</div>
+
+{% if report.data_quality.degraded_mode %}
+<div class="risk-box" style="border-color:#f3c6c2;background:#fdeceb;color:#8a231c;">
+  <strong>⚠ DATA QUALITY WARNING — DEGRADED MODE.</strong>
+  {{ report.data_quality.reasons | join('; ') }}
+</div>
+{% endif %}
+
+<!-- 60-second view -->
+<div class="section">
+  <div class="section-title">60-Second Market View</div>
+  <div class="card">
+    <span class="badge {{ report.regime.labels[0].value | badge_class if report.regime.labels else '' }}">
+      {{ report.regime.labels | map(attribute='value') | join(' · ') }}
+    </span>
+    <span class="badge badge-neutral">Confidence {{ report.regime.confidence_pct }}%</span>
+    <p style="margin-top:4px;">{{ report.one_sentence_summary or report.regime.summary }}</p>
+  </div>
+  <div class="grid2" style="margin-top:5px;">
+    <div>
+      <div class="label">Three things that matter today</div>
+      <ol class="tight" style="padding-left:14px;">
+        {% for item in report.three_things_that_matter %}<li>{{ item }}</li>{% endfor %}
+      </ol>
+    </div>
+    <div>
+      <div class="label">What the market is trading</div>
+      <p>{{ report.dominant_narrative or "Not available." }}</p>
+    </div>
+  </div>
+  {% if report.main_risk_today %}
+  <div class="risk-box"><strong>Main risk today:</strong> {{ report.main_risk_today }}</div>
+  {% endif %}
+</div>
+
+<!-- Market dashboard: compact 3-column -->
+<div class="section">
+  <div class="section-title">Overnight Market Dashboard</div>
+  <div class="dash-columns">
+    {% for group_name, assets in report.market_snapshot.assets | groupby('group') %}
+    <table class="dash">
+      <tr class="group-hdr"><td colspan="3">{{ group_name }}</td></tr>
+      <tr><th>Asset</th><th class="num">1D</th><th class="num">5D</th></tr>
+      {% for a in assets %}
+      <tr>
+        <td>{{ a.display_name }}</td>
+        <td class="num {{ 'pos' if (a.daily_pct or 0) > 0 else 'neg' if (a.daily_pct or 0) < 0 else '' }}">{{ a.daily_pct | pct }}</td>
+        <td class="num {{ 'pos' if (a.return_5d_pct or 0) > 0 else 'neg' if (a.return_5d_pct or 0) < 0 else '' }}">{{ a.return_5d_pct | pct }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Macro stories -->
+{% if report.macro_stories %}
+<div class="section">
+  <div class="section-title">Macro Stories</div>
+  {% for s in report.macro_stories %}
+  <div class="card">
+    <div class="item-title">{{ s.title }}</div>
+    <p>{{ s.fact }}</p>
+    <div class="label">Why it matters</div><p>{{ s.why_it_matters }}</p>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Sector/theme map -->
+<div class="section">
+  <div class="section-title">Sector &amp; Theme Map</div>
+  <div class="grid2">
+    {% for t in report.theme_views %}
+    <div class="card theme-card {{ 'bull' if 'BULLISH' in t.view.value else 'bear' if 'BEARISH' in t.view.value else '' }}">
+      <div class="item-title">{{ t.theme_name }}
+        <span class="badge {{ t.view.value | badge_class }}">{{ t.view.value | replace('_',' ') }}</span>
+      </div>
+      <p>{{ t.evidence | join(' · ') }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- What actually mattered -->
+<div class="section">
+  <div class="section-title">What Actually Mattered Overnight</div>
+  {% for s in report.top_stories %}
+  <div class="card">
+    <div class="item-title">{{ s.title }} <span class="badge badge-neutral">{{ s.importance.value }}</span></div>
+    <p><strong>Fact:</strong> {{ s.fact }}</p>
+    <p><strong>Why it matters:</strong> {{ s.why_it_matters }}</p>
+    {% if s.first_order_effect %}<p><strong>First-order:</strong> {{ s.first_order_effect }}{% if s.second_order_effect %} &nbsp;|&nbsp; <strong>Second-order:</strong> {{ s.second_order_effect }}{% endif %}</p>{% endif %}
+    <div class="label">Sources</div><p>{{ s.source_names | join(', ') }}</p>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Company radar -->
+<div class="section">
+  <div class="section-title">Company Radar</div>
+  <div class="grid2">
+    {% for c in report.company_radar %}
+    <div class="card">
+      <div class="item-title">{{ c.ticker }} — {{ c.company_name }}</div>
+      <p>{{ c.explanation }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Trading implications -->
+<div class="section">
+  <div class="section-title">Trading Implications</div>
+  {% if report.trade_ideas %}
+    {% for i in report.trade_ideas %}
+    <div class="card">
+      <div class="item-title">{{ i.direction.value }}{% if i.ticker %} — {{ i.ticker }}{% endif %}</div>
+      {% if i.thesis %}<p><strong>Thesis:</strong> {{ i.thesis }}</p>{% endif %}
+      {% if i.invalidation_condition %}<p><strong>Invalidation:</strong> {{ i.invalidation_condition }}</p>{% endif %}
+      {% if i.why_not_to_trade %}<p><strong>Why NOT to trade:</strong> {{ i.why_not_to_trade }}</p>{% endif %}
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="no-trade">NO HIGH-CONVICTION SETUP TODAY</div>
+  {% endif %}
+</div>
+
+<div class="page-break"></div>
+
+<!-- Risk calendar -->
+<div class="section">
+  <div class="section-title">Today's Risk Calendar</div>
+  <table class="dash risk-cal">
+    <tr><th>Event</th><th>Time</th><th>Importance</th></tr>
+    {% for e in report.macro_events_today %}
+    <tr>
+      <td>{{ e.event }}</td>
+      <td>{{ e.local_time_label or (e.scheduled_at_sgt | sgt if e.scheduled_at_sgt else "—") }}</td>
+      <td><span class="badge {{ 'badge-bearish' if e.importance.value == 'HIGH' else 'badge-neutral' }}">{{ e.importance.value }}</span></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="3">No major scheduled events identified for today.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<!-- Learn one thing -->
+{% if report.learn_one_thing %}
+<div class="section">
+  <div class="section-title">Learn One Thing Today</div>
+  <div class="card">
+    <div class="item-title">{{ report.learn_one_thing.title }}</div>
+    <p>{{ report.learn_one_thing.body }}</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- Terminology -->
+{% if report.terminology %}
+<div class="section">
+  <div class="section-title">Terminology</div>
+  <div class="grid2">
+    {% for term in report.terminology %}
+    <div class="card">
+      <p><span class="term-name">{{ term.term }}</span> — {{ term.plain_definition }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="footer">
+  {{ report.disclaimer }}
+</div>
+
+</body>
+</html>

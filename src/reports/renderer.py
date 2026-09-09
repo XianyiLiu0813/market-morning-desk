@@ -44,3 +44,11 @@ def render_report(report: MorningReport) -> str:
     env = get_env()
     template = env.get_template("morning_email.html")
     return template.render(report=report)
+
+
+def render_report_pdf_html(report: MorningReport) -> str:
+    """Render the compact, print-optimized layout (A4, ~3-5 pages) used as
+    the source for PDF export - see src/reports/pdf.py::html_to_pdf()."""
+    env = get_env()
+    template = env.get_template("morning_pdf.html")
+    return template.render(report=report)

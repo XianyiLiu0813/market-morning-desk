@@ -12,6 +12,10 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 os.environ.setdefault("MOCK_MODE", "true")
+# Keep the default test run fast and portable (no local Chrome/Chromium
+# dependency): PDF generation is exercised explicitly by
+# tests/test_pdf_report.py instead, which skips if Chrome isn't found.
+os.environ.setdefault("EMAIL_FORMAT", "html")
 
 
 @pytest.fixture(autouse=True)
