@@ -38,7 +38,7 @@ def collect_market_snapshot(
     except Exception as exc:  # noqa: BLE001
         logger.error("Market data provider %s failed entirely: %s", provider.name, exc)
         assets = []
-        warnings.append(f"Market data provider '{provider.name}' failed: {exc}")
+        warnings.append(f"行情数据源 '{provider.name}' 完全失败：{exc}")
 
     # Backfill group/display metadata in case a provider only returns bare
     # price data keyed by symbol.
@@ -56,7 +56,7 @@ def collect_market_snapshot(
 
     stale_count = sum(1 for a in assets if a.is_stale)
     if stale_count:
-        warnings.append(f"{stale_count} asset(s) have market data older than {max_age} minutes")
+        warnings.append(f"有 {stale_count} 项行情数据已超过 {max_age} 分钟未更新")
 
     min_assets = settings.quality.get("require_min_market_assets", 5)
     got_symbols = {a.symbol for a in assets}
@@ -65,7 +65,7 @@ def collect_market_snapshot(
         logger.warning("Market data missing for %d symbol(s): %s", len(missing), ", ".join(missing))
     if len(assets) < min_assets:
         warnings.append(
-            f"Only {len(assets)} market assets returned (minimum expected: {min_assets})"
+            f"只获取到 {len(assets)} 项行情数据（最低要求 {min_assets} 项）"
         )
 
     return MarketSnapshot(

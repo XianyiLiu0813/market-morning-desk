@@ -37,22 +37,18 @@ Return JSON:
 # Fallback library used only if the LLM call fails validation - keeps the
 # report non-empty rather than silently dropping the educational section.
 FALLBACK_LEARN_ONE_THING = {
-    "title": "Why the same news can mean different things to different stocks",
+    "title": "为什么同一条新闻，对不同股票的意义可能完全不同",
     "body": (
-        "One of the most important habits to build as a trader is asking not just 'is this "
-        "news good or bad', but 'good or bad for whom, and how much of it is already expected'. "
-        "The same headline - say, a company raising its spending plans - can be read as bullish "
-        "for its suppliers (they may sell more) and neutral-to-bearish for the company's own "
-        "margins in the near term (spending more before it generates revenue can pressure free "
-        "cash flow). Professional investors habitually trace a single piece of news along a "
-        "chain: who benefits first (first-order), who benefits next (second-order), and who "
-        "might be squeezed. They also ask what was already priced into the stock beforehand - "
-        "if a company was already expected to raise guidance, actually raising it may cause "
-        "little reaction, or even a decline, because the 'good news' was already reflected in "
-        "the price. This is why professional analysis always separates FACT (what was "
-        "announced), INTERPRETATION (what it might mean), and PRICED-IN status (whether the "
-        "market already expected it) before jumping to a trade conclusion. Building this habit "
-        "is more valuable long-term than memorizing any single indicator."
+        "作为交易者，最值得养成的习惯之一，不是简单地问'这条新闻是好是坏'，而是问'对谁是好、对谁是坏，"
+        "以及这件事市场是不是已经预期到了'。同一条头条新闻——比如一家公司宣布加大支出计划——对它的供应商"
+        "可能是利好（供应商可能卖得更多），但对公司自身短期的利润率却可能是中性偏负面的（还没产生收入就先"
+        "花钱，会压制自由现金流，free cash flow）。专业投资者习惯把一条新闻沿着链条去追问：谁最先受益"
+        "（一级影响，first-order），谁接下来受益（二级影响，second-order），谁可能被挤压。他们还会问："
+        "这件事此前是不是已经被市场'定价'（priced in）了——如果一家公司本来就被普遍预期会上调业绩指引，"
+        "那它真的上调了，股价可能反应平平，甚至下跌，因为这个'好消息'早就已经反映在价格里了。这也是为什么"
+        "专业分析总是把 FACT（发生了什么）、INTERPRETATION（这可能意味着什么）、以及是否已经 PRICED IN"
+        "（市场是否已经预期到）这三者分开来看，而不是看到消息就直接下结论。养成这个习惯，比记住任何一个"
+        "单一指标都更有长期价值。"
     ),
     "tied_to_event": None,
 }

@@ -72,18 +72,18 @@ def synthesize_report(
     from src.models.schemas import MentalModel
 
     return EditorialSynthesis(
-        three_things_that_matter=[s.title for s in top_stories[:3]] or ["No major stories identified today."],
-        main_risk_today="Editorial synthesis unavailable; review individual story analyses directly.",
+        three_things_that_matter=[s.title for s in top_stories[:3]] or ["今日未识别到重大事件。"],
+        main_risk_today="编辑综合分析本次不可用；请直接查看下方各条独立的新闻解读。",
         one_sentence_summary=regime.summary,
-        dominant_narrative="Editorial synthesis engine unavailable for this run.",
+        dominant_narrative="编辑综合分析引擎本次运行不可用。",
         mental_model=MentalModel(
-            what_changed="Not available.",
-            what_did_not_change="Not available.",
-            what_is_market_pricing="Not available.",
-            what_is_consensus="Not available.",
-            what_could_market_be_wrong_about="Not available.",
-            what_data_would_change_view="Not available.",
-            which_assets_express_view_best="Not available.",
-            is_risk_reward_attractive="Not available.",
+            what_changed="暂不可用。",
+            what_did_not_change="暂不可用。",
+            what_is_market_pricing="暂不可用。",
+            what_is_consensus="暂不可用。",
+            what_could_market_be_wrong_about="暂不可用。",
+            what_data_would_change_view="暂不可用。",
+            which_assets_express_view_best="暂不可用。",
+            is_risk_reward_attractive="暂不可用。",
         ),
     )

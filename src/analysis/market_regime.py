@@ -63,7 +63,7 @@ def infer_market_regime(
     return MarketRegimeView(
         labels=["MIXED"],
         confidence_pct=0,
-        summary="Market regime could not be determined (analysis engine unavailable or invalid response).",
+        summary="本次运行无法判断市场状态（分析引擎不可用，或返回结果无效）。",
         supporting_evidence=[],
         contradicting_evidence=[],
         source_ids=[],

@@ -65,14 +65,13 @@ def build_review(
                 thesis_intact = subsequent_move <= 0
 
         lesson = (
-            "Price moved in the anticipated direction, but this alone does not confirm the "
-            "thesis was correct for the reasons stated - re-check whether the original catalyst "
-            "actually played out as expected."
+            "价格朝预期方向移动了，但这本身并不能证明当初的逻辑是对的——需要回头核实一下最初设想的催化剂"
+            "是否真的按预期兑现了。"
             if thesis_intact
-            else "Outcome does not (yet) match the original thesis direction; review whether the "
-            "invalidation condition was triggered or whether more time/confirmation is simply needed."
+            else "目前的走势还没有（或没能）验证最初的判断方向；建议回顾一下失效条件是否已经触发，"
+            "还是只是需要更多时间/确认。"
             if thesis_intact is False
-            else "Insufficient market data to assess outcome for this idea."
+            else "现有行情数据不足以评估这个想法的结果。"
         )
 
         out.append(

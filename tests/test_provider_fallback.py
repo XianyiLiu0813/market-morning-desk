@@ -37,7 +37,7 @@ class AlwaysFailsMacroProvider(MacroProvider):
 def test_market_provider_failure_does_not_raise(settings):
     snapshot = collect_market_snapshot(AlwaysFailsMarketProvider(), settings, date(2026, 9, 9))
     assert snapshot.assets == []
-    assert any("failed" in w.lower() for w in snapshot.warnings)
+    assert any("失败" in w for w in snapshot.warnings)
 
 
 def test_news_provider_failure_does_not_raise():
