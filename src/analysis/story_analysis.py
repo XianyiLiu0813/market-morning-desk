@@ -22,7 +22,9 @@ INSTRUCTIONS = """For each cluster in INPUT_DATA.clusters, produce a full struct
 analysis. Base FACT strictly on the cluster's fact_hint/title/source data - do not add facts not \
 present there. WHY_IT_MATTERS, effects, and beneficiaries should draw on the theme's drivers/ \
 upstream/downstream context provided per cluster, expressed as reasoned inference (interpretation), \
-clearly hedged where uncertain.
+clearly hedged where uncertain. When referring to a theme in prose, use the human-readable name \
+from theme_names (e.g. "AI Compute"), never the raw snake_case key from `themes` (e.g. "ai_compute") \
+- the keys are only for machine cross-referencing.
 
 Return JSON:
 {
@@ -56,6 +58,7 @@ def analyze_stories(llm: LLMProvider, clusters: List[NewsCluster], theme_context
     payload = []
     for c in clusters:
         theme_ctx = [theme_context.get(t, {}) for t in c.themes if t in theme_context]
+        theme_names = [theme_context[t]["name"] for t in c.themes if t in theme_context]
         payload.append(
             {
                 "cluster_id": c.cluster_id,
@@ -63,6 +66,7 @@ def analyze_stories(llm: LLMProvider, clusters: List[NewsCluster], theme_context
                 "fact_hint": c.fact_hint,
                 "tickers": c.tickers,
                 "themes": c.themes,
+                "theme_names": theme_names,
                 "theme_context": theme_ctx,
                 "source_names": c.source_names,
                 "best_tier": c.best_tier,

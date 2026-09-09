@@ -120,6 +120,7 @@ def run_morning_pipeline(
 
     theme_context = {
         t["key"]: {
+            "name": t.get("name", t["key"]),
             "drivers": t.get("drivers", []),
             "upstream": t.get("upstream", []),
             "downstream": t.get("downstream", []),

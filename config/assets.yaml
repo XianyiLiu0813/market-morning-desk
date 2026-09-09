@@ -3,69 +3,69 @@
 # is what's shown in the email. Group names are used to order the dashboard.
 
 groups:
-  - group: "US Equity Indices"
+  - group: "美股指数"
     assets:
-      - { symbol: "^GSPC", display: "S&P 500" }
-      - { symbol: "^IXIC", display: "Nasdaq Composite" }
-      - { symbol: "^NDX", display: "Nasdaq 100" }
-      - { symbol: "^DJI", display: "Dow Jones" }
-      - { symbol: "^RUT", display: "Russell 2000" }
+      - { symbol: "^GSPC", display: "标普500" }
+      - { symbol: "^IXIC", display: "纳斯达克综合指数" }
+      - { symbol: "^NDX", display: "纳斯达克100" }
+      - { symbol: "^DJI", display: "道琼斯指数" }
+      - { symbol: "^RUT", display: "罗素2000" }
 
-  - group: "Hong Kong"
+  - group: "港股"
     assets:
-      - { symbol: "^HSI", display: "Hang Seng Index" }
-      - { symbol: "^HSTECH", display: "Hang Seng Tech Index" }
+      - { symbol: "^HSI", display: "恒生指数" }
+      - { symbol: "^HSTECH", display: "恒生科技指数" }
 
-  - group: "Volatility"
+  - group: "波动率"
     assets:
       - { symbol: "^VIX", display: "VIX" }
 
-  - group: "Rates"
+  - group: "利率"
     assets:
-      - { symbol: "US2Y", display: "US 2Y Treasury Yield" }
-      - { symbol: "US10Y", display: "US 10Y Treasury Yield" }
-      - { symbol: "US30Y", display: "US 30Y Treasury Yield" }
-      - { symbol: "US2S10S", display: "2s10s Spread" }
+      - { symbol: "US2Y", display: "美债2年期收益率" }
+      - { symbol: "US10Y", display: "美债10年期收益率" }
+      - { symbol: "US30Y", display: "美债30年期收益率" }
+      - { symbol: "US2S10S", display: "2s10s利差" }
 
-  - group: "FX"
+  - group: "外汇"
     assets:
-      - { symbol: "DXY", display: "US Dollar Index" }
+      - { symbol: "DXY", display: "美元指数" }
       - { symbol: "USDCNH", display: "USD/CNH" }
       - { symbol: "USDJPY", display: "USD/JPY" }
 
-  - group: "Commodities"
+  - group: "大宗商品"
     assets:
-      - { symbol: "GC=F", display: "Gold" }
-      - { symbol: "SI=F", display: "Silver" }
-      - { symbol: "CL=F", display: "WTI Crude Oil" }
-      - { symbol: "BZ=F", display: "Brent Crude Oil" }
-      - { symbol: "HG=F", display: "Copper" }
+      - { symbol: "GC=F", display: "黄金" }
+      - { symbol: "SI=F", display: "白银" }
+      - { symbol: "CL=F", display: "WTI原油" }
+      - { symbol: "BZ=F", display: "布伦特原油" }
+      - { symbol: "HG=F", display: "铜" }
 
-  - group: "Crypto"
+  - group: "加密货币"
     assets:
-      - { symbol: "BTC-USD", display: "Bitcoin" }
-      - { symbol: "ETH-USD", display: "Ethereum" }
+      - { symbol: "BTC-USD", display: "比特币" }
+      - { symbol: "ETH-USD", display: "以太坊" }
 
-  - group: "Sector / Theme ETFs"
+  - group: "行业/主题 ETF"
     assets:
-      - { symbol: "QQQ", display: "Invesco QQQ (Nasdaq 100)" }
-      - { symbol: "SPY", display: "SPDR S&P 500" }
-      - { symbol: "IWM", display: "iShares Russell 2000" }
-      - { symbol: "SMH", display: "VanEck Semiconductor" }
-      - { symbol: "SOXX", display: "iShares Semiconductor" }
-      - { symbol: "XLK", display: "Technology Select Sector" }
-      - { symbol: "XLF", display: "Financial Select Sector" }
-      - { symbol: "XLE", display: "Energy Select Sector" }
-      - { symbol: "XLY", display: "Consumer Discretionary Select" }
-      - { symbol: "XLP", display: "Consumer Staples Select" }
-      - { symbol: "XLV", display: "Health Care Select Sector" }
-      - { symbol: "XLI", display: "Industrial Select Sector" }
-      - { symbol: "XLB", display: "Materials Select Sector" }
-      - { symbol: "XLU", display: "Utilities Select Sector" }
-      - { symbol: "ARKK", display: "ARK Innovation" }
-      - { symbol: "KWEB", display: "KraneShares CSI China Internet" }
-      - { symbol: "MCHI", display: "iShares MSCI China" }
-      - { symbol: "FXI", display: "iShares China Large-Cap" }
-      - { symbol: "GDX", display: "VanEck Gold Miners" }
-      - { symbol: "GLD", display: "SPDR Gold Shares" }
-      - { symbol: "SLV", display: "iShares Silver Trust" }
+      - { symbol: "QQQ", display: "纳斯达克100 ETF (QQQ)" }
+      - { symbol: "SPY", display: "标普500 ETF (SPY)" }
+      - { symbol: "IWM", display: "罗素2000 ETF (IWM)" }
+      - { symbol: "SMH", display: "半导体 ETF (SMH)" }
+      - { symbol: "SOXX", display: "半导体 ETF (SOXX)" }
+      - { symbol: "XLK", display: "科技行业 ETF (XLK)" }
+      - { symbol: "XLF", display: "金融行业 ETF (XLF)" }
+      - { symbol: "XLE", display: "能源行业 ETF (XLE)" }
+      - { symbol: "XLY", display: "非必需消费 ETF (XLY)" }
+      - { symbol: "XLP", display: "必需消费 ETF (XLP)" }
+      - { symbol: "XLV", display: "医疗保健 ETF (XLV)" }
+      - { symbol: "XLI", display: "工业行业 ETF (XLI)" }
+      - { symbol: "XLB", display: "原材料行业 ETF (XLB)" }
+      - { symbol: "XLU", display: "公用事业 ETF (XLU)" }
+      - { symbol: "ARKK", display: "ARK创新 ETF (ARKK)" }
+      - { symbol: "KWEB", display: "中国互联网 ETF (KWEB)" }
+      - { symbol: "MCHI", display: "MSCI中国 ETF (MCHI)" }
+      - { symbol: "FXI", display: "中国大盘股 ETF (FXI)" }
+      - { symbol: "GDX", display: "黄金矿业股 ETF (GDX)" }
+      - { symbol: "GLD", display: "黄金 ETF (GLD)" }
+      - { symbol: "SLV", display: "白银 ETF (SLV)" }

@@ -19,8 +19,8 @@ context, produce:
 1. learn_one_thing: ONE concept directly tied to today's actual market action (see \
 INPUT_DATA.recently_taught_concepts - avoid re-teaching a beginner concept taught in the last \
 INPUT_DATA.recap_window_days days unless it's unusually important again; prefer progressing to a \
-new or slightly more advanced concept). Body should be 150-400 words (aim for at least 180 \
-words), written for a learning trader: professional but clearly explained, connect it explicitly \
+new or slightly more advanced concept). Body should be roughly 300-600 Chinese characters (well \
+over the 150-character minimum), written for a learning trader: professional but clearly explained, connect it explicitly \
 to today's event(s).
 
 2. terminology: 1-5 potentially-unfamiliar terms that appear in today's analysis (e.g. terms like \

@@ -6,6 +6,13 @@ apply simple, transparent rules/templates to produce schema-valid,
 on-topic output. This keeps MOCK_MODE meaningful even if the fixtures are
 edited, and demonstrates the same FACT/INTERPRETATION/hedged-language
 discipline the real prompts ask for.
+
+Output language: Simplified Chinese for all prose, with ticker symbols,
+index/ETF names, and finance jargon (HBM, ASP, capex, EPS...) kept in
+English - matching the same house style enforced on the real LLM prompts
+(see src/analysis/llm_client.py::GUARDRAIL_PREAMBLE rule 6). Schema enum
+fields (direction/view/importance/labels) stay in their exact English enum
+values - only free-text fields are Chinese.
 """
 from __future__ import annotations
 
@@ -61,31 +68,30 @@ def _market_regime(data: Dict[str, Any]) -> Dict[str, Any]:
     if concentrated:
         labels.append("AI_LED")
         labels.append("GROWTH_LED")
-        supporting.append(f"SMH +{semis:.2f}% vs Russell 2000 +{small_caps:.2f}% - move concentrated in AI/semis")
-        contradicting.append(f"Russell 2000 only +{small_caps:.2f}%, suggesting broad risk appetite is more muted than headline index gains imply")
+        supporting.append(f"SMH +{semis:.2f}% 对比 Russell 2000 +{small_caps:.2f}%——涨幅集中在 AI/半导体板块")
+        contradicting.append(f"Russell 2000 仅 +{small_caps:.2f}%，说明市场整体风险偏好可能不如指数涨幅看起来那么强")
     elif broad > 0.3 and small_caps > 0.3 and vix < 0:
         labels.append("RISK_ON")
-        supporting.append(f"S&P 500 +{broad:.2f}%, Russell 2000 +{small_caps:.2f}%, VIX {vix:+.2f}% - broad-based participation")
+        supporting.append(f"标普500 +{broad:.2f}%、Russell 2000 +{small_caps:.2f}%、VIX {vix:+.2f}%——普涨格局，参与面较宽")
     elif broad < -0.3 and vix > 3:
         labels.append("RISK_OFF")
-        supporting.append(f"S&P 500 {broad:+.2f}% with VIX {vix:+.2f}% - defensive tone")
+        supporting.append(f"标普500 {broad:+.2f}%，VIX {vix:+.2f}%——避险情绪偏浓")
     else:
         labels.append("MIXED")
-        supporting.append(f"S&P 500 {broad:+.2f}%, Nasdaq {growth:+.2f}% - no single clean regime signal")
+        supporting.append(f"标普500 {broad:+.2f}%、纳斯达克 {growth:+.2f}%——没有单一清晰的市场风格信号")
 
     if us10y > 1.0:
         labels.append("RATE_DRIVEN")
-        supporting.append(f"US 10Y yield +{us10y:.2f}% (in yield terms) - rates move is notable enough to matter for duration-sensitive assets")
+        supporting.append(f"美债10年期收益率 +{us10y:.2f}%（收益率口径）——利率波动幅度已足以影响久期敏感型资产")
 
     if vix < -5:
-        supporting.append(f"VIX {vix:+.2f}% - implied volatility compressed markedly")
+        supporting.append(f"VIX {vix:+.2f}%——隐含波动率明显回落")
 
     confidence = 70 if concentrated else 60
     summary = (
-        "The overnight move looks concentrated in AI/semiconductor-linked growth names rather than "
-        "broad-based risk appetite."
+        "隔夜的上涨看起来集中在 AI/半导体相关的成长股，而非普遍性的风险偏好回升。"
         if concentrated
-        else "Overnight price action suggests a mixed-to-modestly-risk-on tone without a single dominant driver."
+        else "隔夜行情呈现偏温和的风险偏好回升，但没有单一的主导驱动因素。"
     )
 
     source_ids = [s.get("cluster_id") for s in data.get("top_stories", []) if s.get("cluster_id")]
@@ -127,7 +133,6 @@ def _theme_analysis(data: Dict[str, Any]) -> Dict[str, Any]:
         evidence += [s["title"] for s in stories[:2]]
         risks = theme.get("risks", [])
         risk = risks[0] if risks else None
-        kind = "TACTICAL" if len(stories) >= 1 and not moves else "STRUCTURAL"
 
         out.append(
             {
@@ -136,7 +141,7 @@ def _theme_analysis(data: Dict[str, Any]) -> Dict[str, Any]:
                 "view": view,
                 "momentum": momentum,
                 "kind": "STRUCTURAL",
-                "evidence": evidence or ["Limited same-day evidence available."],
+                "evidence": evidence or ["今日可用证据有限。"],
                 "risk": risk,
                 "change_vs_yesterday": None,
                 "confidence_pct": 65 if moves else 40,
@@ -169,12 +174,14 @@ def _story_analysis(data: Dict[str, Any]) -> Dict[str, Any]:
         score = c.get("importance_score", 0) or 0
         importance = "HIGH" if score >= 3.0 else "MEDIUM" if score >= 1.8 else "LOW"
 
+        themes_str = "、".join(c.get("theme_names") or c.get("themes", [])) or "暂无明确关联主题"
+        drivers_str = "、".join(drivers[:2]) or "供需情况"
+        downstream_str = "、".join(downstream[:2]) or "相关供应链公司"
         why_it_matters = (
-            f"This is tagged to {', '.join(c.get('themes', [])) or 'no specific theme'}; "
-            f"if the underlying driver ({', '.join(drivers[:2]) or 'demand/supply conditions'}) "
-            f"continues, it may extend into downstream areas such as {', '.join(downstream[:2]) or 'related suppliers'}."
+            f"该消息关联主题：{themes_str}；若背后的驱动因素（{drivers_str}）持续，"
+            f"可能会传导至下游领域，例如 {downstream_str}。"
         )
-        first_order = ", ".join(tickers) if tickers else (", ".join(upstream[:2]) or "Not clearly identified from available data")
+        first_order = ", ".join(tickers) if tickers else (", ".join(upstream[:2]) or "现有数据未能明确指向具体标的")
         second_order = ", ".join(downstream[:2]) if downstream else None
 
         out.append(
@@ -186,17 +193,17 @@ def _story_analysis(data: Dict[str, Any]) -> Dict[str, Any]:
                 "fact": fact,
                 "why_it_matters": why_it_matters,
                 "market_impact": (
-                    f"Related tickers/ETFs: {', '.join(tickers)}." if tickers else "No single-ticker price confirmation identified."
+                    f"相关标的/ETF：{', '.join(tickers)}。" if tickers else "未发现明确的单一标的价格验证信号。"
                 ),
                 "first_order_effect": first_order,
                 "second_order_effect": second_order,
                 "who_benefits": tickers or downstream[:2],
                 "who_may_be_hurt": [
-                    "Companies further down the cost chain that may face higher input costs"
+                    "成本链下游、可能面临更高投入成本的公司"
                 ] if drivers else [],
-                "is_priced_in": "Uncertain - INPUT_DATA does not include analyst consensus or positioning data, so this cannot be assessed with confidence.",
-                "what_to_watch_next": f"Follow-on commentary or data confirming whether {drivers[0] if drivers else 'this trend'} persists.",
-                "what_would_invalidate": f"A reversal or contradiction in {risks[0] if risks else 'the underlying data'} would weaken this reading.",
+                "is_priced_in": "尚不确定——现有数据不包含分析师一致预期或持仓数据，因此难以给出有把握的判断。",
+                "what_to_watch_next": f"后续需关注是否有进一步表态或数据，验证「{drivers[0] if drivers else '该趋势'}」能否持续。",
+                "what_would_invalidate": f"若「{risks[0] if risks else '相关数据'}」出现反转或矛盾信号，将削弱这一判断。",
                 "confidence_pct": 55 if tickers else 45,
                 "source_ids": [c["cluster_id"]],
                 "urls": c.get("urls", []),
@@ -209,6 +216,8 @@ def _story_analysis(data: Dict[str, Any]) -> Dict[str, Any]:
 # company_analysis
 # --------------------------------------------------------------------------
 
+# Keys must exactly match the EarningsDriver enum values in models/schemas.py
+# - do NOT translate these, they are validated schema values, not display text.
 DRIVER_KEYWORDS = {
     "Capex": ["capex", "capital expenditure", "data-center capex", "spending guidance"],
     "Backlog": ["backlog", "bookings"],
@@ -230,34 +239,32 @@ def _company_analysis(data: Dict[str, Any]) -> Dict[str, Any]:
                 driver = drv
                 break
 
-        headline = stories[0]["title"] if stories else "No significant company-specific news identified."
+        ticker = company["ticker"]
+        headline = stories[0]["title"] if stories else "未发现该公司相关的重大专属消息。"
         if driver == "Capex":
             explanation = (
-                f"The disclosed spending increase, if it flows into {company['ticker']}'s addressable "
-                "market, could support revenue growth for suppliers - but capex intentions do not "
-                "automatically translate one-to-one into near-term supplier earnings, and timing/mix "
-                "matter."
+                f"该资本开支（capex）增加，若能传导至 {ticker} 所处的市场空间，理论上有望支撑其供应链公司的收入增长——"
+                "但 capex 意图并不会一对一转化为短期供应商业绩，具体节奏和结构（mix）仍是关键变量。"
             )
         elif driver == "Backlog":
             explanation = (
-                f"Rising backlog for {company['ticker']} suggests improved revenue visibility, though "
-                "backlog is not yet recognized revenue and could still see push-outs or cancellations."
+                f"{ticker} 的在手订单（backlog）上升，意味着收入可见度有所改善，"
+                "但 backlog 尚未转化为已确认收入，仍存在延期或取消的可能。"
             )
         elif driver == "ASP":
             explanation = (
-                f"Firmer pricing, if it holds, could support {company['ticker']}'s blended average "
-                "selling price and potentially gross margin, assuming input costs do not rise in tandem."
+                f"若定价保持坚挺，有望支撑 {ticker} 的综合平均售价（ASP），并可能间接支撑毛利率（gross margin）——"
+                "前提是原材料成本没有同步上升。"
             )
         else:
             explanation = (
-                f"The available news provides context for {company['ticker']} but does not clearly "
-                "isolate a single dominant earnings driver from the information at hand."
+                f"现有消息为 {ticker} 提供了一定背景信息，但尚不足以从中明确锁定单一的主导业绩驱动因素。"
             )
 
         theme_keys = sorted({t for s in stories for t in s.get("themes", [])})
         out.append(
             {
-                "ticker": company["ticker"],
+                "ticker": ticker,
                 "company_name": company["company_name"],
                 "headline": headline,
                 "relevant_driver": driver,
@@ -291,26 +298,25 @@ def _trade_ideas(data: Dict[str, Any]) -> Dict[str, Any]:
         theme = bullish_themes.get(matched_theme_key, {})
         if c.get("confidence_pct", 0) < 45:
             continue
+        ticker = c["ticker"]
+        theme_name = theme.get("theme_name", matched_theme_key)
+        view_zh = theme.get("view", "constructive").replace("_", " ").lower()
         ideas.append(
             {
-                "ticker": c["ticker"],
+                "ticker": ticker,
                 "direction": "LONG WATCH",
                 "thesis": c.get("explanation"),
                 "catalyst": c.get("headline"),
-                "why_now": f"Theme view on {theme.get('theme_name', matched_theme_key)} is currently "
-                f"{theme.get('view', 'constructive').replace('_', ' ').lower()}.",
-                "confirmation_required": f"{c['ticker']} should continue to show relative strength versus its sector ETF, "
-                "not just move in line with the broader market.",
-                "entry_condition": f"If {c['ticker']} holds recent relative-strength gains versus peers over the next 1-2 sessions.",
-                "invalidation_condition": f"If the theme view on {theme.get('theme_name', matched_theme_key)} deteriorates "
-                "or if this news is not confirmed by follow-up data/disclosures.",
-                "target_logic": "No specific price target - this is a conditional watch idea, not a price call.",
-                "risk_reward": "Qualitatively favorable if thesis holds, but unconfirmed by hard price-level analysis in this run.",
-                "time_horizon": "1-4 weeks",
-                "key_risks": ["Theme may already be well-known/crowded", "Single data point may not persist"],
+                "why_now": f"当前对「{theme_name}」主题的判断为 {view_zh}。",
+                "confirmation_required": f"需要 {ticker} 相对其板块 ETF 持续维持相对强势，而非仅仅跟随大盘波动。",
+                "entry_condition": f"若 {ticker} 在接下来1-2个交易日内，相对同业的强势表现能够维持。",
+                "invalidation_condition": f"若对「{theme_name}」主题的判断转弱，或该消息未能被后续数据/披露进一步验证。",
+                "target_logic": "不给出具体目标价——这是一个条件观察型想法（watch idea），而非明确的点位预测。",
+                "risk_reward": "若逻辑成立，风险回报比在定性层面偏有利，但本次分析未包含具体点位层面的验证。",
+                "time_horizon": "1-4 周",
+                "key_risks": ["该主题可能已被市场充分认知、交易拥挤", "单一数据点未必能持续验证"],
                 "confidence_pct": min(60, c.get("confidence_pct", 40) + 5),
-                "why_not_to_trade": "This theme may already be reflected in the stock's recent run-up, and the "
-                "underlying driver has not been confirmed by a second independent data point.",
+                "why_not_to_trade": "该主题可能已经部分反映在近期股价涨幅中，且背后的驱动因素尚未获得第二个独立数据点的验证。",
                 "source_ids": c.get("source_ids", []),
             }
         )
@@ -323,60 +329,47 @@ def _trade_ideas(data: Dict[str, Any]) -> Dict[str, Any]:
 
 LEARN_LIBRARY = {
     "rates_up_growth_up": {
-        "title": "Why rising bond yields don't always hurt growth stocks",
+        "title": "为什么美债收益率上升，成长股不一定会跌",
         "body": (
-            "A common rule of thumb is: 'rising bond yields are bad for growth stocks.' The logic is "
-            "real - growth stocks derive most of their value from earnings expected many years in the "
-            "future, and a higher long-term interest rate (like the US 10-year Treasury yield) means "
-            "those distant future earnings get 'discounted' more heavily when calculating what they're "
-            "worth today. This is called duration risk: the longer away your expected cash flows are, "
-            "the more sensitive your valuation is to changes in the discount rate. However, today is a "
-            "useful reminder that this relationship is not mechanical. Yields rose, yet AI-linked growth "
-            "names outperformed. Why? Because the market is weighing TWO forces at once: the "
-            "discount-rate effect (negative for growth valuations) and the earnings-expectations effect "
-            "(if data suggests stronger demand or spending in a sector, expected future earnings can rise "
-            "enough to outweigh a higher discount rate). When earnings expectations move faster than the "
-            "discount rate, growth stocks can rise even as yields rise. The lesson: don't apply the "
-            "'yields up, growth down' rule mechanically - always check whether an earnings-related catalyst "
-            "is offsetting the rate effect before assuming a stock 'should' fall."
+            "一个常见的经验法则是：'美债收益率上升，对成长股不利'。这个逻辑本身是有道理的——成长股的大部分估值来自"
+            "未来多年后才能兑现的盈利预期，而更高的长端利率（比如美债10年期收益率）意味着，把这些遥远未来的现金流"
+            "折算成今天的价值时，需要用更高的折现率（discount rate）来打折。这就是所谓的久期风险（duration risk）："
+            "预期现金流距离现在越远，估值对折现率变化就越敏感。不过今天的行情是个很好的提醒：这层关系并不是机械"
+            "对应的。收益率上升了，但 AI 相关的成长股反而跑赢了。为什么？因为市场同时在权衡两股力量：折现率效应"
+            "（对成长股估值不利）和盈利预期效应（如果数据显示某个板块的需求或支出在加强，未来盈利预期的上修幅度"
+            "可能超过折现率上升带来的压制）。当盈利预期上修的速度快于折现率上升的速度时，成长股即使在收益率上升"
+            "的背景下也可能继续上涨。这里的教训是：不要机械套用'收益率上升=成长股下跌'的公式——在下判断之前，先"
+            "确认是否有盈利端的催化剂正在抵消利率端的压力。"
         ),
-        "tied_to_event": "US 10Y yield rose while AI/semiconductor-linked names outperformed",
+        "tied_to_event": "美债10年期收益率上升，但 AI/半导体相关个股逆势跑赢",
     },
     "china_stimulus": {
-        "title": "Why China policy stimulus moves HK tech stocks even without direct earnings news",
+        "title": "为什么央行降息这类中国政策消息，没有直接业绩利好也能带动港股科技股",
         "body": (
-            "When you see a policy move like a central bank interest-rate cut described as bullish for "
-            "internet or consumer stocks, it can seem indirect - the company itself hasn't announced "
-            "anything. The connection runs through the economy: lower policy rates are intended to make "
-            "borrowing cheaper for households and businesses, which can support consumer spending and "
-            "credit growth over time. Chinese internet and e-commerce companies, and much of the Hang "
-            "Seng Tech index, are highly sensitive to Chinese consumer demand. So a rate cut is a bet on "
-            "FUTURE economic conditions improving, which investors partly price in immediately, well "
-            "before it shows up in any single company's revenue. This is a useful distinction to build: "
-            "company-specific news (like an earnings beat) tells you about ONE business, while "
-            "macro/policy news tells you about the environment ALL businesses in a region or sector "
-            "operate in. Professional investors track both, but weight macro-driven moves differently - "
-            "they tend to affect a whole basket of stocks together rather than just one name, and the "
-            "read-through can take longer (or reverse faster) than a direct earnings catalyst."
+            "当你看到像央行降息这样的政策消息被解读为利好互联网或消费类股票时，可能会觉得逻辑有点绕——毕竟公司"
+            "本身并没有发布任何公告。这里的传导路径是通过整个经济体：政策利率下调，本意是让居民和企业的借贷成本"
+            "更低，从而在一段时间内支撑消费和信贷增长。中国互联网、电商公司，以及恒生科技指数（Hang Seng Tech）"
+            "成分股的大部分公司，对中国消费需求都高度敏感。所以，一次降息本质上是在押注未来经济状况会改善，而"
+            "投资者往往会提前部分定价（price in）这个预期，远早于它真正体现在某一家公司的具体收入数字里。这里"
+            "有一个值得建立的重要区分：公司专属消息（比如一次超预期的财报）告诉你的是某一家公司的情况；而宏观/"
+            "政策消息告诉你的是某个地区或板块里所有公司共同面对的经营环境。专业投资者会同时跟踪这两类信息，但"
+            "对宏观驱动的行情会用不同的权重去看待——它们往往会同时影响一整篮子股票，而不只是某一只个股，而且其"
+            "传导到基本面的时间，可能比一次直接的业绩催化剂更长（也可能反转得更快）。"
         ),
-        "tied_to_event": "PBOC rate cut coincided with Hang Seng Tech / China internet strength",
+        "tied_to_event": "中国央行降息，恒生科技/中国互联网板块走强",
     },
     "default": {
-        "title": "Why 'good news' and 'stock goes up' don't always go together",
+        "title": "为什么'好消息'不一定意味着股价会涨",
         "body": (
-            "It's tempting to think markets work like a simple scoreboard: good news pushes a stock up, "
-            "bad news pushes it down. In practice, professional investors care less about whether news is "
-            "good or bad in isolation, and more about whether it beats, meets, or misses what was already "
-            "EXPECTED. This is the idea of being 'priced in'. If a company was widely expected to increase "
-            "spending, and it does exactly that, the stock may not move much - the market had already "
-            "adjusted its price to reflect that expectation. If the increase is bigger than expected, or "
-            "comes with new information about DURATION (how long elevated spending will last) or MIX (what "
-            "exactly the money is being spent on), that incremental surprise is what tends to move prices. "
-            "This is why the same type of news (e.g. a capex guidance raise) can produce very different "
-            "stock reactions across companies and across time - the surprise relative to consensus, not "
-            "the news itself, usually explains the move best. Building the habit of asking 'was this "
-            "already expected?' before reacting to a headline is one of the highest-value skills a "
-            "developing trader can build."
+            "很容易把市场想象成一个简单的记分板：好消息推升股价，坏消息压低股价。但在实际操作中，专业投资者更"
+            "关心的往往不是这条消息本身是好是坏，而是它相对于市场此前的'预期'（EXPECTED）是超出、符合、还是"
+            "不及。这就是所谓'已经price in（已被定价）'的概念。如果市场普遍预期一家公司会加大支出，而它确实"
+            "这么做了，股价可能不会有太大反应——因为市场早就把这个预期反映进了价格。如果支出增幅超出预期，或者"
+            "带来了关于持续时间（DURATION，即高支出会持续多久）或结构（MIX，即这笔钱具体花在哪里）的新信息，"
+            "这种增量的'意外'才是真正推动价格变化的因素。这也是为什么同一类消息（比如一次资本开支指引上调，"
+            "capex guidance raise）在不同公司、不同时间点会引发截然不同的股价反应——相对于市场一致预期的意外"
+            "程度，而非消息本身，往往才是解释股价变动最好的角度。养成'这条消息是不是已经被市场预期到了？'这个"
+            "习惯，再去反应一条新闻，是一名成长中的交易者最有价值的能力之一。"
         ),
         "tied_to_event": None,
     },
@@ -384,39 +377,39 @@ LEARN_LIBRARY = {
 
 TERMINOLOGY_LIBRARY = {
     "backlog": {
-        "term": "Backlog",
-        "plain_definition": "The dollar value of confirmed customer orders a company has received but not yet delivered or recognized as revenue.",
-        "why_traders_care": "Rising backlog suggests future revenue visibility, but backlog can be cancelled or delayed, so it's a leading indicator, not booked sales.",
+        "term": "Backlog（在手订单）",
+        "plain_definition": "公司已经收到、但尚未交付或确认为收入的客户订单总金额。",
+        "why_traders_care": "backlog 上升意味着未来收入的可见度提高，但它还只是先行指标，不是已经落袋的销售，仍有被取消或延期的风险。",
     },
     "asp": {
-        "term": "ASP (Average Selling Price)",
-        "plain_definition": "The average price a company sells one unit of its product for, across its full mix of products.",
-        "why_traders_care": "Rising ASP can lift revenue and gross margin even if unit volumes stay flat, which is why investors watch pricing commentary closely in cyclical industries like memory chips.",
+        "term": "ASP（Average Selling Price，平均售价）",
+        "plain_definition": "公司所有产品组合下，单件产品的平均销售价格。",
+        "why_traders_care": "即使销量不变，ASP 上升也能拉动收入和毛利率——这也是为什么投资者在内存芯片这类周期性行业中，会密切关注定价方面的表态。",
     },
     "gross_margin": {
-        "term": "Gross margin",
-        "plain_definition": "Revenue minus the direct cost of producing a good or service, expressed as a percentage of revenue.",
-        "why_traders_care": "It shows how much profit is left after production costs, before operating expenses - a key signal of pricing power and cost efficiency.",
+        "term": "Gross margin（毛利率）",
+        "plain_definition": "收入减去直接生产成本后的余额，以占收入的百分比表示。",
+        "why_traders_care": "毛利率反映的是扣除生产成本、在计入运营费用之前还剩多少利润——是衡量定价能力和成本效率的关键指标。",
     },
     "basis_point": {
-        "term": "Basis point",
-        "plain_definition": "One hundredth of one percentage point (0.01%). Used to describe small changes in interest rates precisely.",
-        "why_traders_care": "Rate-sensitive assets can react to moves as small as a few basis points, so precision in describing rate changes matters.",
+        "term": "Basis point（基点，简称 bp）",
+        "plain_definition": "百分之一个百分点（0.01%），用于精确描述利率的小幅变动。",
+        "why_traders_care": "对利率敏感的资产，哪怕只是几个基点的变动也可能引发明显反应，因此描述利率变化时的精确度很重要。",
     },
     "bid_to_cover": {
-        "term": "Bid-to-cover ratio",
-        "plain_definition": "At a government bond auction, the ratio of total bids received to the amount of bonds actually sold.",
-        "why_traders_care": "A lower-than-average bid-to-cover ratio can signal weaker investor demand for that debt, which can push yields higher.",
+        "term": "Bid-to-cover ratio（认购倍数）",
+        "plain_definition": "在政府债券拍卖中，收到的总投标金额与实际发行债券金额之比。",
+        "why_traders_care": "认购倍数低于历史均值，可能意味着投资者对该债券的需求偏弱，从而推高收益率。",
     },
     "priced_in": {
-        "term": "Priced in",
-        "plain_definition": "When an expected future event is already reflected in an asset's current price.",
-        "why_traders_care": "It explains why 'good news' sometimes causes a stock to fall (if the news was less good than what was already expected) and vice versa.",
+        "term": "Priced in（已被定价 / 已反映在价格中）",
+        "plain_definition": "指一个预期中的未来事件，已经提前反映在当前资产价格里了。",
+        "why_traders_care": "这个概念能解释为什么'好消息'有时反而导致股价下跌（如果消息不如此前市场预期的那么好），反之亦然。",
     },
     "operating_leverage": {
-        "term": "Operating leverage",
-        "plain_definition": "The degree to which a company's operating profit grows faster (or shrinks faster) than its revenue, because many costs are fixed.",
-        "why_traders_care": "High operating leverage means small revenue changes can cause outsized swings in profit - useful for understanding earnings sensitivity.",
+        "term": "Operating leverage（经营杠杆）",
+        "plain_definition": "由于成本中固定成本占比较高，公司经营利润的增长（或下滑）速度快于收入增速的程度。",
+        "why_traders_care": "经营杠杆高的公司，收入的小幅变化也可能带来利润的大幅波动——理解这一点有助于判断业绩的敏感度。",
     },
 }
 
@@ -443,17 +436,18 @@ def _educational_content(data: Dict[str, Any]) -> Dict[str, Any]:
     text_blob = " ".join(s.get("title", "") + " " + s.get("why_it_matters", "") + " " + s.get("fact", "") for s in stories).lower()
     terms = []
     for key, term_data in TERMINOLOGY_LIBRARY.items():
-        keyword = term_data["term"].split(" ")[0].lower()
-        if keyword in text_blob or key.replace("_", " ") in text_blob:
+        keyword = key.replace("_", " ")
+        english_keyword = term_data["term"].split("（")[0].split(" ")[0].lower()
+        if english_keyword in text_blob or keyword in text_blob:
             entry = dict(term_data)
-            entry["todays_example"] = f"Referenced in today's coverage: \"{term_data['term']}\" appears in the day's stories."
+            entry["todays_example"] = f"今日报道中出现了该概念相关的表述（{term_data['term']}）。"
             terms.append(entry)
         if len(terms) >= max_terms:
             break
     if not terms:
         # Always surface at least one term so the section isn't empty.
         entry = dict(TERMINOLOGY_LIBRARY["priced_in"])
-        entry["todays_example"] = "General concept relevant to interpreting today's news flow."
+        entry["todays_example"] = "该概念与理解今日新闻整体走向密切相关。"
         terms.append(entry)
 
     return {"learn_one_thing": learn, "terminology": terms[:max_terms]}
@@ -471,47 +465,44 @@ def _editorial_synthesis(data: Dict[str, Any]) -> Dict[str, Any]:
 
     three_things = [s["title"] for s in top_stories[:3]]
     while len(three_things) < 3:
-        three_things.append("No additional high-importance story identified for this slot today.")
+        three_things.append("今日未识别到额外的高重要性事件。")
 
     bearish_themes = [t for t in themes if t.get("view") in ("BEARISH", "SLIGHTLY_BEARISH")]
     main_risk = (
-        f"{bearish_themes[0]['name']} shows a {bearish_themes[0]['view'].replace('_', ' ').lower()} tilt, "
-        "which could weigh on sentiment if it broadens."
+        f"{bearish_themes[0]['name']} 板块当前呈现{bearish_themes[0]['view'].replace('_', ' ').lower()}倾向，"
+        "若进一步扩散可能会压制整体市场情绪。"
         if bearish_themes
-        else "The main risk is that today's concentrated gains (where a small number of themes/tickers "
-        "drive most of the move) fail to broaden, leaving the rally vulnerable to a reversal in the "
-        "leading names."
+        else "今日的主要风险在于：目前的涨幅集中在少数主题/个股上，如果不能扩散到更多板块，"
+        "这波行情在龙头股回调时会显得较为脆弱。"
     )
 
     dominant_theme = max(themes, key=lambda t: 1 if t.get("view") in ("BULLISH", "SLIGHTLY_BULLISH") else 0, default=None)
     dominant_narrative = (
-        f"The market currently appears to be trading primarily on {dominant_theme['name']} strength "
-        f"({regime.get('summary', '')}), with rates and China policy developments as secondary "
-        "cross-currents rather than the main driver."
+        f"市场目前看起来主要围绕「{dominant_theme['name']}」板块的强势展开"
+        f"（{regime.get('summary', '')}），利率和中国政策等因素更多是次要的交叉影响，而非主导因素。"
         if dominant_theme
-        else regime.get("summary", "No dominant narrative could be established from available data.")
+        else regime.get("summary", "现有数据不足以判断今日的主导交易逻辑。")
     )
 
     ideas_note = (
-        f"{len(trade_ideas)} conditional watch idea(s) were identified; none should be read as a "
-        "recommendation to trade without independent confirmation."
+        f"今日识别到 {len(trade_ideas)} 个条件性观察想法（watch idea）；在没有独立验证之前，均不应被当作交易建议。"
         if trade_ideas
-        else "No trade ideas met the bar for inclusion today."
+        else "今日没有想法达到纳入报告的门槛。"
     )
 
     return {
         "three_things_that_matter": three_things[:3],
         "main_risk_today": main_risk,
-        "one_sentence_summary": regime.get("summary", "Market regime summary unavailable."),
+        "one_sentence_summary": regime.get("summary", "本次运行的市场状态摘要不可用。"),
         "dominant_narrative": dominant_narrative,
         "mental_model": {
-            "what_changed": three_things[0] if three_things else "Not enough data to determine.",
-            "what_did_not_change": "Underlying structural themes (per theme view table) remain in place absent contrary evidence.",
-            "what_is_market_pricing": regime.get("summary", "Not available."),
-            "what_is_consensus": "Not directly observable from available data; would require positioning/options data to assess with confidence.",
-            "what_could_market_be_wrong_about": bearish_themes[0]["risk"] if bearish_themes and bearish_themes[0].get("risk") else "Concentration risk in the leading theme(s) is under-appreciated if breadth does not improve.",
-            "what_data_would_change_view": "Confirmation or contradiction of today's top stories via follow-up filings, data releases, or price action over the next 1-3 sessions.",
-            "which_assets_express_view_best": ", ".join(t.get("name", "") for t in themes[:2]) or "Not clearly identified today.",
+            "what_changed": three_things[0] if three_things else "现有数据不足以判断。",
+            "what_did_not_change": "在没有相反证据的情况下，行业与主题地图（Sector & Theme Map）中的结构性判断维持不变。",
+            "what_is_market_pricing": regime.get("summary", "暂不可用。"),
+            "what_is_consensus": "无法从现有数据中直接观察到一致预期；需要持仓或期权数据才能给出有把握的判断。",
+            "what_could_market_be_wrong_about": bearish_themes[0]["risk"] if bearish_themes and bearish_themes[0].get("risk") else "如果涨幅广度不能改善，市场可能低估了当前领涨主题的集中度风险。",
+            "what_data_would_change_view": "接下来1-3个交易日内，后续披露、数据发布或价格走势对今日核心事件的验证或证伪。",
+            "which_assets_express_view_best": "、".join(t.get("name", "") for t in themes[:2]) or "今日暂无明确标的。",
             "is_risk_reward_attractive": ideas_note,
         },
     }

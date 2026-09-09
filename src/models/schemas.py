@@ -317,9 +317,15 @@ class LearnOneThing(BaseModel):
     @field_validator("body")
     @classmethod
     def length_guard(cls, v: str) -> str:
-        word_count = len(v.split())
-        if word_count < 50:
-            raise ValueError("Learn-one-thing body is too short to be useful (<50 words)")
+        # Word-splitting on whitespace only works for space-delimited scripts
+        # (English etc.) - CJK text (Chinese/Japanese/Korean) has no spaces
+        # between words, so len(v.split()) would wrongly flag a genuinely
+        # long Chinese paragraph as "too short". Use character count instead,
+        # which is language-agnostic; ~50 English words ≈ 250+ characters,
+        # and a substantive Chinese paragraph runs well past 150 characters.
+        char_count = len(v.strip())
+        if char_count < 150:
+            raise ValueError("Learn-one-thing body is too short to be useful (<150 characters)")
         return v
 
 
@@ -388,9 +394,8 @@ class MorningReport(BaseModel):
     source_index: List[SourceRecord] = Field(default_factory=list)
 
     disclaimer: str = (
-        "This report is an AI-assisted research and learning tool, not financial advice. "
-        "Information may be incomplete or inaccurate. Verify critical information from "
-        "primary sources before trading."
+        "本报告是一个 AI 辅助的市场研究与学习工具，不构成投资建议（not financial advice）。"
+        "信息可能不完整或存在误差，交易前请务必通过一手信息源（primary sources）核实关键信息。"
     )
 
     @field_validator("trade_ideas")

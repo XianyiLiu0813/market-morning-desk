@@ -11,20 +11,18 @@ from src.utils.config import Settings
 logger = logging.getLogger("morning_desk")
 
 _SHORT_BODY_TEMPLATE = """
-<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+<div lang="zh-CN" style="font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Segoe UI',Helvetica,Arial,sans-serif;
             max-width:480px;margin:0 auto;padding:24px;color:#1a1d23;">
   <div style="font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:#6b7280;margin-bottom:4px;">
     AI Market Morning Desk
   </div>
-  <h2 style="margin:0 0 10px 0;">{run_date} report is attached</h2>
+  <h2 style="margin:0 0 10px 0;">{run_date} 的报告已附上</h2>
   <p style="font-size:13.5px;line-height:1.6;color:#33383f;">
-    Today's market intelligence &amp; trading-tutor report is attached as a{page_hint} PDF.
-    One-sentence summary: {summary}
+    今日的市场情报与交易导师报告已作为 PDF 附件发送{page_hint}。一句话摘要：{summary}
   </p>
   <p style="font-size:11px;line-height:1.6;color:#8a8f98;margin-top:20px;">
-    This report is an AI-assisted research and learning tool, not financial advice.
-    Information may be incomplete or inaccurate. Verify critical information from
-    primary sources before trading.
+    本报告是一个 AI 辅助的市场研究与学习工具，不构成投资建议（not financial advice）。
+    信息可能不完整或存在误差，交易前请务必通过一手信息源核实关键信息。
   </p>
 </div>
 """
@@ -36,8 +34,8 @@ def build_short_notification_body(run_date, summary: Optional[str], page_count: 
     content twice)."""
     return _SHORT_BODY_TEMPLATE.format(
         run_date=run_date,
-        summary=summary or "See attached report.",
-        page_hint=f" {page_count}-page" if page_count else "",
+        summary=summary or "详见附件。",
+        page_hint=f"（{page_count} 页）" if page_count else "",
     )
 
 

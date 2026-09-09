@@ -4,88 +4,88 @@
 
 themes:
   - key: ai_compute
-    name: "AI Compute"
+    name: "AI 算力"
     description: >
       The buildout of GPU/accelerator-based compute capacity for training and
       inference of large AI models.
     keywords: ["GPU", "AI accelerator", "training cluster", "inference", "CUDA", "AI chip"]
     tickers: ["NVDA", "AMD", "AVGO", "TSM"]
     related_etfs: ["SMH", "SOXX", "QQQ"]
-    upstream: ["Semiconductors", "Advanced packaging"]
-    downstream: ["Cloud / Data Centers", "AI Infrastructure"]
+    upstream: ["半导体", "Advanced packaging"]
+    downstream: ["云计算 / 数据中心", "AI 基础设施"]
     drivers: ["Hyperscaler capex", "Model training demand", "Enterprise AI adoption"]
     risks: ["Capex digestion pause", "Export controls", "Custom silicon substitution"]
 
   - key: semiconductors
-    name: "Semiconductors"
+    name: "半导体"
     description: "Chip designers, foundries, and equipment makers broadly."
     keywords: ["semiconductor", "chip", "foundry", "wafer", "fab", "lithography"]
     tickers: ["TSM", "AVGO", "AMAT", "LRCX", "ASML"]
     related_etfs: ["SMH", "SOXX"]
     upstream: ["Equipment / materials"]
-    downstream: ["AI Compute", "Memory / HBM", "Consumer electronics"]
+    downstream: ["AI 算力", "存储 / HBM", "Consumer electronics"]
     drivers: ["Capex cycles", "Node transitions", "End-demand recovery"]
     risks: ["Cyclicality", "Geopolitical export restrictions", "Inventory correction"]
 
   - key: memory_hbm
-    name: "Memory / HBM"
+    name: "存储 / HBM"
     description: >
       DRAM/NAND memory makers and high-bandwidth memory (HBM) used in AI
       accelerators.
     keywords: ["HBM", "DRAM", "NAND", "memory pricing", "memory shortage"]
     tickers: ["MU", "SNDK"]
     related_etfs: ["SMH"]
-    upstream: ["Semiconductors"]
-    downstream: ["AI Compute"]
+    upstream: ["半导体"]
+    downstream: ["AI 算力"]
     drivers: ["AI accelerator attach rate", "Pricing discipline", "Capacity additions"]
     risks: ["Oversupply from capacity expansion", "Historically cyclical pricing"]
 
   - key: ai_infrastructure
-    name: "AI Infrastructure"
+    name: "AI 基础设施"
     description: "Power, cooling, networking and physical buildout supporting AI data centers."
     keywords: ["data center", "power grid", "cooling", "transformer", "AI infrastructure"]
     tickers: ["VRT", "ETN", "ANET"]
     related_etfs: ["XLK", "XLI", "XLU"]
-    upstream: ["AI Compute", "Cloud / Data Centers"]
+    upstream: ["AI 算力", "云计算 / 数据中心"]
     downstream: []
     drivers: ["Hyperscaler capex guidance", "Grid interconnection capacity"]
     risks: ["Permitting/power bottlenecks", "Capex pause risk"]
 
   - key: cloud_datacenters
-    name: "Cloud / Data Centers"
+    name: "云计算 / 数据中心"
     description: "Hyperscale cloud platforms and the data centers underpinning them."
     keywords: ["hyperscaler", "cloud capex", "data center capacity", "cloud revenue"]
     tickers: ["MSFT", "GOOGL", "AMZN", "ORCL"]
     related_etfs: ["XLK", "QQQ"]
-    upstream: ["AI Infrastructure"]
-    downstream: ["AI Compute", "Networking / Optical"]
+    upstream: ["AI 基础设施"]
+    downstream: ["AI 算力", "网络 / 光模块"]
     drivers: ["Enterprise cloud migration", "AI workload growth"]
     risks: ["Capex ROI scrutiny", "Slower enterprise IT spend"]
 
   - key: networking_optical
-    name: "Networking / Optical"
+    name: "网络 / 光模块"
     description: "Switches, optical interconnects and networking gear for AI clusters."
     keywords: ["optical", "networking switch", "interconnect", "transceiver"]
     tickers: ["ANET", "CRDO", "MRVL"]
     related_etfs: ["SMH", "XLK"]
-    upstream: ["AI Compute"]
+    upstream: ["AI 算力"]
     downstream: []
     drivers: ["Cluster scale-out", "Bandwidth requirements"]
     risks: ["Customer concentration", "Technology transitions (copper vs optical)"]
 
   - key: robotics_physical_ai
-    name: "Robotics / Physical AI"
+    name: "机器人 / 具身智能"
     description: "Humanoid robotics, industrial automation and embodied AI."
     keywords: ["humanoid robot", "robotics", "physical AI", "automation"]
     tickers: ["TSLA"]
     related_etfs: ["XLI"]
-    upstream: ["AI Compute"]
+    upstream: ["AI 算力"]
     downstream: []
     drivers: ["Labor cost substitution", "Model generalization progress"]
     risks: ["Long commercialization timelines", "High valuation on unproven revenue"]
 
   - key: china_internet_hktech
-    name: "China Internet / HK Tech"
+    name: "中国互联网 / 港股科技"
     description: "Chinese internet platforms listed in HK/US and the Hang Seng Tech complex."
     keywords: ["China internet", "HK tech", "Hang Seng Tech", "China consumption", "China stimulus"]
     tickers: ["9988.HK", "0700.HK", "BABA", "JD", "PDD", "BIDU"]
@@ -96,7 +96,7 @@ themes:
     risks: ["Regulatory intervention", "US-China delisting/geopolitical risk"]
 
   - key: consumer_internet
-    name: "Consumer Internet"
+    name: "消费互联网"
     description: "US/global consumer-facing internet and e-commerce platforms."
     keywords: ["e-commerce", "advertising revenue", "consumer internet"]
     tickers: ["META", "AMZN", "GOOGL"]
@@ -107,7 +107,7 @@ themes:
     risks: ["Macro slowdown", "Platform regulation"]
 
   - key: cybersecurity
-    name: "Cybersecurity"
+    name: "网络安全"
     description: "Security software vendors."
     keywords: ["cybersecurity", "breach", "endpoint security"]
     tickers: ["CRWD", "PANW"]
@@ -118,7 +118,7 @@ themes:
     risks: ["Valuation compression", "Competitive pricing pressure"]
 
   - key: software_saas
-    name: "Software / SaaS"
+    name: "软件 / SaaS"
     description: "Enterprise software and subscription businesses."
     keywords: ["SaaS", "ARR", "software subscription", "enterprise software"]
     tickers: ["MSFT", "ORCL", "PLTR"]
@@ -129,18 +129,18 @@ themes:
     risks: ["Growth deceleration", "AI disintermediation risk"]
 
   - key: energy_power_ai
-    name: "Energy / Power for AI"
+    name: "能源 / AI 电力"
     description: "Electricity generation and grid capacity needed to power AI data centers."
     keywords: ["power demand", "electricity grid", "utility", "natural gas power"]
     tickers: ["ETN", "VRT"]
     related_etfs: ["XLU", "XLE"]
     upstream: []
-    downstream: ["AI Infrastructure"]
+    downstream: ["AI 基础设施"]
     drivers: ["Data center power demand growth"]
     risks: ["Regulatory/rate case delays", "Grid interconnection queues"]
 
   - key: gold_precious_metals
-    name: "Gold / Precious Metals"
+    name: "黄金 / 贵金属"
     description: "Gold and silver as monetary/safe-haven and industrial assets."
     keywords: ["gold", "silver", "safe haven", "central bank buying", "real yields"]
     tickers: ["GDX"]
@@ -151,7 +151,7 @@ themes:
     risks: ["Rising real yields", "USD strength reversal"]
 
   - key: crypto
-    name: "Crypto"
+    name: "加密货币"
     description: "Bitcoin and broader digital assets, tracked as a risk-sentiment barometer."
     keywords: ["bitcoin", "crypto", "digital assets"]
     tickers: []

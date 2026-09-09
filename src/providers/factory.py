@@ -89,8 +89,13 @@ def build_macro_provider(settings: Settings) -> MacroProvider:
 
 
 def build_llm_provider(settings: Settings) -> LLMProvider:
+    """LLM_PROVIDER is intentionally independent of MOCK_MODE (unlike the
+    market/news/macro data providers, which MOCK_MODE does control) - this
+    lets you test real email/LLM delivery against mock market/news data
+    without wiring up every real data provider at once. `settings.llm_provider`
+    already defaults to "mock" unless LLM_PROVIDER is explicitly set."""
     provider_name = settings.llm_provider.lower()
-    if provider_name == "mock" or settings.mock_mode:
+    if provider_name == "mock":
         return MockLLMProvider()
 
     if provider_name == "anthropic":
@@ -116,8 +121,10 @@ def build_llm_provider(settings: Settings) -> LLMProvider:
 
 
 def build_email_provider(settings: Settings) -> EmailProvider:
+    """EMAIL_PROVIDER is intentionally independent of MOCK_MODE - see
+    build_llm_provider() docstring above for why."""
     provider_name = settings.email_provider.lower()
-    if provider_name == "mock" or settings.mock_mode:
+    if provider_name == "mock":
         return MockEmailProvider()
 
     if provider_name == "resend":
