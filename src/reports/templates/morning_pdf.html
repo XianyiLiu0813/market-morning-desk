@@ -6,7 +6,13 @@
 <style>
   @page { size: A4; margin: 14mm 13mm 16mm 13mm; }
   * { box-sizing: border-box; }
-  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; color:#1a1d23; font-size:8.6pt; line-height:1.38; }
+  /* Explicit CJK font names so Chinese text doesn't silently fall back to
+     "no font found" (blank boxes/garbled glyphs) on a system that has a
+     CJK font installed under a different family name than the OS default -
+     e.g. GitHub Actions runners after installing fonts-noto-cjk (see
+     .github/workflows/morning.yml). macOS/Windows users get PingFang
+     SC/Microsoft YaHei via the system-ui fonts already. */
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC","Segoe UI",Helvetica,Arial,sans-serif; color:#1a1d23; font-size:8.6pt; line-height:1.38; }
   h1,h2,h3,p,ul,ol { margin:0; }
   .header { display:flex; justify-content:space-between; align-items:baseline; border-bottom:2px solid #0f1720; padding-bottom:6px; margin-bottom:10px; }
   .header .brand { font-size:14pt; font-weight:800; color:#0f1720; }
