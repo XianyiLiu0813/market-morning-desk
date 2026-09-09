@@ -1,0 +1,44 @@
+# Default company watch universe (Section 12).
+# The system does NOT require holdings/portfolio data to run - this is just
+# a list of companies the analysis layer pays extra attention to when they
+# appear in collected news/filings.
+#
+# Add your own HOLDINGS / WATCHLIST split later without changing code -
+# just add a `list` field, e.g. `holdings: [...]`.
+
+watchlist:
+  us:
+    - { ticker: "NVDA", name: "NVIDIA" }
+    - { ticker: "AMD", name: "Advanced Micro Devices" }
+    - { ticker: "AVGO", name: "Broadcom" }
+    - { ticker: "TSM", name: "Taiwan Semiconductor (ADR)" }
+    - { ticker: "MU", name: "Micron Technology" }
+    - { ticker: "MRVL", name: "Marvell Technology" }
+    - { ticker: "ASML", name: "ASML Holding" }
+    - { ticker: "AMAT", name: "Applied Materials" }
+    - { ticker: "LRCX", name: "Lam Research" }
+    - { ticker: "SNDK", name: "Sandisk" }
+    - { ticker: "META", name: "Meta Platforms" }
+    - { ticker: "MSFT", name: "Microsoft" }
+    - { ticker: "GOOGL", name: "Alphabet" }
+    - { ticker: "AMZN", name: "Amazon" }
+    - { ticker: "TSLA", name: "Tesla" }
+    - { ticker: "PLTR", name: "Palantir" }
+    - { ticker: "ORCL", name: "Oracle" }
+    - { ticker: "ANET", name: "Arista Networks" }
+    - { ticker: "CRDO", name: "Credo Technology" }
+
+  hk_china:
+    - { ticker: "9988.HK", name: "Alibaba Group" }
+    - { ticker: "0700.HK", name: "Tencent Holdings" }
+    - { ticker: "1810.HK", name: "Xiaomi" }
+    - { ticker: "3690.HK", name: "Meituan" }
+    - { ticker: "9618.HK", name: "JD.com" }
+    - { ticker: "9888.HK", name: "Baidu" }
+    - { ticker: "0981.HK", name: "SMIC" }
+    - { ticker: "1347.HK", name: "Hua Hong Semiconductor" }
+
+  # Data access permitting (often limited without a specialized data vendor).
+  optional_foreign:
+    - { ticker: "000660.KS", name: "SK Hynix" }
+    - { ticker: "005930.KS", name: "Samsung Electronics" }

@@ -1,0 +1,84 @@
+name: Market Morning Desk
+
+# Runs the full morning pipeline and emails the report before the Hong
+# Kong market opens (Section 32). GitHub Actions cron is always UTC, so
+# the trigger time below is converted from the desired Asia/Singapore run
+# time - see src/utils/time.py::sgt_to_utc_cron() (same conversion logic
+# used here) if you change the schedule.
+#
+#   07:30 Asia/Singapore (UTC+8, no DST) = 23:30 UTC the previous day
+#
+# Adjust both the cron expression and config/settings.yaml `email_time` /
+# `schedule` block together if you change the target send time.
+
+on:
+  schedule:
+    - cron: "30 23 * * *"
+  workflow_dispatch:
+    inputs:
+      mock_mode:
+        description: "Run in MOCK_MODE (true/false)"
+        required: false
+        default: "false"
+      run_date:
+        description: "Optional run date override (YYYY-MM-DD)"
+        required: false
+        default: ""
+
+jobs:
+  morning-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore SQLite database
+        uses: actions/cache@v4
+        with:
+          path: data/market_morning_desk.db
+          key: morning-desk-db-${{ github.run_id }}
+          restore-keys: |
+            morning-desk-db-
+
+      - name: Run morning pipeline
+        env:
+          MOCK_MODE: ${{ github.event.inputs.mock_mode || 'false' }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_PROVIDER: ${{ secrets.EMAIL_PROVIDER }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          NEWSAPI_KEY: ${{ secrets.NEWSAPI_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: |
+          if [ -n "${{ github.event.inputs.run_date }}" ]; then
+            python main.py morning --date "${{ github.event.inputs.run_date }}"
+          else
+            python main.py morning
+          fi
+
+      - name: Upload report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: morning-report-${{ github.run_id }}
+          path: |
+            outbox/*.html
+            logs/*.log
+          retention-days: 14

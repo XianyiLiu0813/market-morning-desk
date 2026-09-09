@@ -1,0 +1,182 @@
+[
+  {
+    "article_id": "a001",
+    "title": "Leading hyperscaler raises FY2027 AI data-center capex guidance, cites accelerator demand outstripping supply",
+    "summary": "In a shareholder letter, the company raised planned capital expenditure for data-center buildout, citing sustained demand for AI training and inference capacity into 2027.",
+    "body_excerpt": "The company said it now expects capital expenditures to grow at a faster pace than previously communicated, driven primarily by AI infrastructure, and that supply of accelerator compute remains constrained relative to customer demand across its cloud business.",
+    "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&filing=8-K&hyperscaler-capex-update",
+    "source_id": "sec_edgar",
+    "source_name": "SEC EDGAR (8-K)",
+    "tier": 1,
+    "published_at_hours_ago": 14,
+    "tickers": [
+      "MSFT",
+      "GOOGL",
+      "AMZN",
+      "NVDA",
+      "AVGO",
+      "MU"
+    ],
+    "themes": [
+      "ai_compute",
+      "cloud_datacenters",
+      "memory_hbm",
+      "ai_infrastructure"
+    ]
+  },
+  {
+    "article_id": "a002",
+    "title": "Memory maker signals tighter DRAM and HBM pricing into next quarter as AI demand absorbs capacity",
+    "summary": "Reuters reports industry checks pointing to continued DRAM contract price increases, with HBM allocation largely sold out through the next several quarters.",
+    "body_excerpt": "Multiple supply-chain sources indicated that DRAM contract prices rose again this month, and that leading memory suppliers have allocated the bulk of upcoming HBM output to a small number of AI accelerator customers, limiting availability for other buyers.",
+    "url": "https://www.reuters.com/technology/memory-pricing-hbm-allocation-report",
+    "source_id": "reuters",
+    "source_name": "Reuters",
+    "tier": 2,
+    "published_at_hours_ago": 11,
+    "tickers": [
+      "MU",
+      "SNDK"
+    ],
+    "themes": [
+      "memory_hbm",
+      "semiconductors"
+    ]
+  },
+  {
+    "article_id": "a003",
+    "title": "US 10-year Treasury yield rises to 4.09% after softer-than-expected demand at note auction",
+    "summary": "Treasury yields moved higher following a bond auction that saw weaker bid-to-cover than recent averages, alongside hawkish comments from a regional Fed president.",
+    "body_excerpt": "The auction's bid-to-cover ratio came in below its recent 6-auction average, and a regional Federal Reserve president said in prepared remarks that further progress on inflation would be needed before additional policy easing.",
+    "url": "https://home.treasury.gov/news/press-releases/auction-results-10yr-note",
+    "source_id": "us_treasury",
+    "source_name": "US Treasury",
+    "tier": 1,
+    "published_at_hours_ago": 16,
+    "tickers": [],
+    "themes": []
+  },
+  {
+    "article_id": "a004",
+    "title": "China trims key policy rate and signals further property-sector support measures",
+    "summary": "The People's Bank of China lowered a short-term policy rate and state media indicated additional measures aimed at stabilizing the property sector are under consideration.",
+    "body_excerpt": "The central bank's rate cut was broadly in line with recent easing communications, while an official commentary noted policymakers are studying additional support for property developers and household consumption.",
+    "url": "http://www.pbc.gov.cn/en/3688110/3688172/index.html",
+    "source_id": "pboc",
+    "source_name": "People's Bank of China",
+    "tier": 1,
+    "published_at_hours_ago": 16,
+    "tickers": [
+      "9988.HK",
+      "0700.HK",
+      "9618.HK"
+    ],
+    "themes": [
+      "china_internet_hktech"
+    ]
+  },
+  {
+    "article_id": "a005",
+    "title": "Gold extends rally to fresh highs as central bank buying and rate-cut expectations persist",
+    "summary": "Bloomberg reports continued official-sector gold purchases alongside investor positioning for further Fed rate cuts, pushing gold to a new all-time high.",
+    "body_excerpt": "Analysts pointed to sustained central bank reserve diversification into gold plus real yields that remain below prior-cycle peaks as supportive factors, while cautioning that positioning has become increasingly crowded.",
+    "url": "https://www.bloomberg.com/news/articles/gold-rally-central-bank-buying",
+    "source_id": "bloomberg",
+    "source_name": "Bloomberg",
+    "tier": 2,
+    "published_at_hours_ago": 9,
+    "tickers": [],
+    "themes": [
+      "gold_precious_metals"
+    ]
+  },
+  {
+    "article_id": "a006",
+    "title": "Networking equipment supplier flags multi-year backlog tied to AI cluster interconnect orders",
+    "summary": "In an investor update filed with regulators, a networking hardware supplier disclosed backlog growth attributed to optical interconnect demand for AI data-center clusters.",
+    "body_excerpt": "The filing disclosed that backlog levels increased versus the prior quarter, which the company attributed primarily to orders for high-speed optical interconnect products used in AI accelerator clusters, and noted bookings visibility now extends further out than in prior cycles.",
+    "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&filing=8-K&networking-backlog-update",
+    "source_id": "sec_edgar",
+    "source_name": "SEC EDGAR (8-K)",
+    "tier": 1,
+    "published_at_hours_ago": 13,
+    "tickers": [
+      "ANET",
+      "CRDO",
+      "MRVL"
+    ],
+    "themes": [
+      "networking_optical",
+      "ai_compute"
+    ]
+  },
+  {
+    "article_id": "a007",
+    "title": "OPEC+ related supply commentary and softer demand outlook weigh on crude oil",
+    "summary": "Crude oil prices declined after reporting on ample supply conditions and a cautious demand outlook from an industry group.",
+    "body_excerpt": "Coverage cited comfortable inventory levels and a cautious near-term demand outlook as reasons crude prices gave back part of their recent gains, though the reporting stopped short of attributing the move to a single confirmed cause.",
+    "url": "https://www.reuters.com/business/energy/oil-prices-supply-demand-outlook",
+    "source_id": "reuters",
+    "source_name": "Reuters",
+    "tier": 2,
+    "published_at_hours_ago": 12,
+    "tickers": [],
+    "themes": [
+      "energy_power_ai"
+    ]
+  },
+  {
+    "article_id": "a008",
+    "title": "Regional bank equity research note flags margin pressure headwinds (secondary media)",
+    "summary": "A market commentary piece speculates on potential net interest margin pressure for regional banks; not corroborated by primary filings.",
+    "body_excerpt": "The piece cites unnamed trading desk chatter suggesting margin pressure at several regional banks, without linking to a specific filing or official disclosure.",
+    "url": "https://www.marketwatch.com/story/regional-bank-margin-pressure-speculation",
+    "source_id": "marketwatch",
+    "source_name": "MarketWatch",
+    "tier": 3,
+    "published_at_hours_ago": 10,
+    "tickers": [
+      "XLF"
+    ],
+    "themes": []
+  },
+  {
+    "article_id": "a009",
+    "title": "Duplicate wire pickup: hyperscaler capex guidance raise (secondary rewrite)",
+    "summary": "A secondary outlet republished coverage of the same hyperscaler capex guidance increase reported earlier via the company's own 8-K filing.",
+    "body_excerpt": "This is a rewrite of the same underlying capex guidance event already disclosed directly by the company.",
+    "url": "https://www.yahoo.com/finance/news/hyperscaler-capex-guidance-rewrite",
+    "source_id": "yahoo_finance",
+    "source_name": "Yahoo Finance",
+    "tier": 3,
+    "published_at_hours_ago": 8,
+    "tickers": [
+      "MSFT",
+      "NVDA"
+    ],
+    "themes": [
+      "ai_compute",
+      "cloud_datacenters"
+    ]
+  },
+  {
+    "article_id": "a010",
+    "title": "Semiconductor equipment maker comments constructively on 2026 wafer fab equipment spending",
+    "summary": "Comments at an industry conference pointed to a constructive outlook for wafer fab equipment spending next year, driven by leading-edge logic and memory capacity additions.",
+    "body_excerpt": "Executives said they see wafer fab equipment spending growing next year, with leading-edge logic and memory capacity expansion cited as the primary drivers, while cautioning that lead times for some tool categories remain elevated.",
+    "url": "https://www.cnbc.com/semiconductor-equipment-2026-spending-outlook",
+    "source_id": "cnbc",
+    "source_name": "CNBC",
+    "tier": 2,
+    "published_at_hours_ago": 15,
+    "tickers": [
+      "AMAT",
+      "LRCX",
+      "ASML"
+    ],
+    "themes": [
+      "semiconductors",
+      "ai_compute"
+    ]
+  }
+]

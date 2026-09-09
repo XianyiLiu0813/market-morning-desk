@@ -1,0 +1,75 @@
+# Market Morning Desk - core settings
+# All user-editable behavior lives in this YAML file (and the sibling
+# themes.yaml / watchlist.yaml / assets.yaml / sources.yaml files).
+# Nothing in here requires touching Python code.
+
+timezone: "Asia/Singapore"
+
+# Morning pipeline schedule (all times are in `timezone` above, 24h HH:MM).
+# These are documentation/labels for the scheduler; the actual cron trigger
+# lives in .github/workflows/morning.yml or your local crontab.
+schedule:
+  data_collection_start: "06:45"
+  market_data_collection: "06:55"
+  news_filing_collection: "07:00"
+  dedup_relevance_ranking: "07:10"
+  llm_analysis: "07:15"
+  validation_report_generation: "07:30"
+  html_rendering: "07:40"
+  email_delivery: "07:45"
+
+email_time: "07:45"
+
+# --- Report sizing (Principle 2: signal over noise) ---
+top_news: 5              # target 3-7, prefer 5
+macro_stories: 3          # 1-4
+company_radar: 5
+trade_ideas_max: 3        # hard cap, 0 allowed
+terminology_terms: 5      # 1-5
+
+# --- Feature toggles ---
+educational_mode: true
+yesterday_review: true
+mock_mode: true            # overridden by MOCK_MODE env var if set
+
+# --- Importance scoring weights (Section 10) ---
+# Must sum to 1.0 (validated at load time). Edit freely.
+scoring_weights:
+  market_impact: 0.25
+  source_quality: 0.15
+  novelty: 0.15
+  theme_relevance: 0.20
+  company_relevance: 0.10
+  price_confirmation: 0.10
+  urgency: 0.05
+
+# Minimum importance score (0-5 scale) for a story to be eligible for the
+# "What Actually Mattered Overnight" section.
+min_story_score: 1.5
+
+# --- Data quality gates (Section 34) ---
+quality:
+  max_market_data_age_minutes: 240   # beyond this, flag as stale
+  require_min_market_assets: 5       # minimum distinct assets with data to proceed normally
+  require_source_url: true           # stories missing a URL are down-weighted, not dropped silently
+
+# --- LLM provider selection (Section 25) ---
+llm:
+  provider: "mock"          # mock | anthropic | openai  (overridden by LLM_PROVIDER env var)
+  model: "claude-sonnet-5"  # overridden by LLM_MODEL env var
+  max_output_tokens: 4096
+  temperature: 0.2
+
+# --- Email provider selection (Section 31) ---
+email:
+  provider: "mock"          # mock | resend | smtp        (overridden by EMAIL_PROVIDER env var)
+  subject_prefix: "AI Market Morning Desk"
+
+# --- Database ---
+database:
+  path: "data/market_morning_desk.db"
+
+# --- Logging ---
+logging:
+  level: "INFO"
+  dir: "logs"

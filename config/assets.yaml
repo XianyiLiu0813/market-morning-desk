@@ -1,0 +1,71 @@
+# Market data universe (Section 6). Add/remove symbols freely.
+# `provider_symbol` is what gets passed to the MarketDataProvider; `display`
+# is what's shown in the email. Group names are used to order the dashboard.
+
+groups:
+  - group: "US Equity Indices"
+    assets:
+      - { symbol: "^GSPC", display: "S&P 500" }
+      - { symbol: "^IXIC", display: "Nasdaq Composite" }
+      - { symbol: "^NDX", display: "Nasdaq 100" }
+      - { symbol: "^DJI", display: "Dow Jones" }
+      - { symbol: "^RUT", display: "Russell 2000" }
+
+  - group: "Hong Kong"
+    assets:
+      - { symbol: "^HSI", display: "Hang Seng Index" }
+      - { symbol: "^HSTECH", display: "Hang Seng Tech Index" }
+
+  - group: "Volatility"
+    assets:
+      - { symbol: "^VIX", display: "VIX" }
+
+  - group: "Rates"
+    assets:
+      - { symbol: "US2Y", display: "US 2Y Treasury Yield" }
+      - { symbol: "US10Y", display: "US 10Y Treasury Yield" }
+      - { symbol: "US30Y", display: "US 30Y Treasury Yield" }
+      - { symbol: "US2S10S", display: "2s10s Spread" }
+
+  - group: "FX"
+    assets:
+      - { symbol: "DXY", display: "US Dollar Index" }
+      - { symbol: "USDCNH", display: "USD/CNH" }
+      - { symbol: "USDJPY", display: "USD/JPY" }
+
+  - group: "Commodities"
+    assets:
+      - { symbol: "GC=F", display: "Gold" }
+      - { symbol: "SI=F", display: "Silver" }
+      - { symbol: "CL=F", display: "WTI Crude Oil" }
+      - { symbol: "BZ=F", display: "Brent Crude Oil" }
+      - { symbol: "HG=F", display: "Copper" }
+
+  - group: "Crypto"
+    assets:
+      - { symbol: "BTC-USD", display: "Bitcoin" }
+      - { symbol: "ETH-USD", display: "Ethereum" }
+
+  - group: "Sector / Theme ETFs"
+    assets:
+      - { symbol: "QQQ", display: "Invesco QQQ (Nasdaq 100)" }
+      - { symbol: "SPY", display: "SPDR S&P 500" }
+      - { symbol: "IWM", display: "iShares Russell 2000" }
+      - { symbol: "SMH", display: "VanEck Semiconductor" }
+      - { symbol: "SOXX", display: "iShares Semiconductor" }
+      - { symbol: "XLK", display: "Technology Select Sector" }
+      - { symbol: "XLF", display: "Financial Select Sector" }
+      - { symbol: "XLE", display: "Energy Select Sector" }
+      - { symbol: "XLY", display: "Consumer Discretionary Select" }
+      - { symbol: "XLP", display: "Consumer Staples Select" }
+      - { symbol: "XLV", display: "Health Care Select Sector" }
+      - { symbol: "XLI", display: "Industrial Select Sector" }
+      - { symbol: "XLB", display: "Materials Select Sector" }
+      - { symbol: "XLU", display: "Utilities Select Sector" }
+      - { symbol: "ARKK", display: "ARK Innovation" }
+      - { symbol: "KWEB", display: "KraneShares CSI China Internet" }
+      - { symbol: "MCHI", display: "iShares MSCI China" }
+      - { symbol: "FXI", display: "iShares China Large-Cap" }
+      - { symbol: "GDX", display: "VanEck Gold Miners" }
+      - { symbol: "GLD", display: "SPDR Gold Shares" }
+      - { symbol: "SLV", display: "iShares Silver Trust" }

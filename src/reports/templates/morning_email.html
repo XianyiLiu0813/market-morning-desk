@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Market Morning Desk — {{ report.run_date }}</title>
+<style>
+  body { margin:0; padding:0; background-color:#f2f3f5; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; color:#1a1d23; }
+  .wrapper { max-width:640px; margin:0 auto; background:#ffffff; }
+  .header { background:#0f1720; color:#ffffff; padding:28px 28px 22px 28px; }
+  .header .brand { font-size:12px; letter-spacing:1.5px; text-transform:uppercase; color:#9fb3c8; margin-bottom:6px; }
+  .header h1 { font-size:22px; margin:0 0 4px 0; font-weight:700; }
+  .header .meta { font-size:12px; color:#9fb3c8; }
+  .section { padding:22px 28px; border-bottom:1px solid #e8eaed; }
+  .section:last-of-type { border-bottom:none; }
+  .section-title { font-size:11px; letter-spacing:1.2px; text-transform:uppercase; color:#6b7280; font-weight:700; margin:0 0 14px 0; }
+  .card { background:#f7f8fa; border:1px solid #e8eaed; border-radius:8px; padding:16px 18px; margin-bottom:12px; }
+  .card:last-child { margin-bottom:0; }
+  h2.item-title { font-size:15px; margin:0 0 6px 0; font-weight:700; color:#0f1720; }
+  p { font-size:13.5px; line-height:1.55; margin:0 0 8px 0; color:#33383f; }
+  p:last-child { margin-bottom:0; }
+  .label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#6b7280; margin:10px 0 3px 0; }
+  .label:first-child { margin-top:0; }
+  .badge { display:inline-block; font-size:10px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; padding:3px 8px; border-radius:4px; margin-right:6px; }
+  .badge-bullish { background:#e6f4ea; color:#1e7e34; }
+  .badge-bearish { background:#fbeaea; color:#b3261e; }
+  .badge-neutral { background:#eef0f3; color:#4a4f57; }
+  .badge-watch { background:#eaf1fc; color:#1a56b3; }
+  .badge-learn { background:#f3ecfb; color:#6a3fb0; }
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  th { text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:0.4px; color:#6b7280; padding:6px 4px; border-bottom:1px solid #e0e2e6; }
+  td { padding:7px 4px; border-bottom:1px solid #f0f1f3; color:#252a31; }
+  td.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .pos { color:#1e7e34; font-weight:600; }
+  .neg { color:#b3261e; font-weight:600; }
+  .group-row td { padding-top:12px; font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:0.4px; color:#0f1720; border-bottom:1px solid #e0e2e6; }
+  .three-things li { font-size:13.5px; line-height:1.55; margin-bottom:8px; color:#252a31; }
+  ul { margin:0; padding-left:18px; }
+  .risk-box { background:#fff8ec; border:1px solid #f2e0b8; border-radius:8px; padding:12px 16px; font-size:13px; color:#7a5b12; margin-top:12px; }
+  .no-trade-box { background:#eef0f3; border:1px dashed #c7cbd1; border-radius:8px; padding:16px; text-align:center; font-size:13px; color:#4a4f57; font-weight:600; }
+  .footer { padding:20px 28px 30px 28px; font-size:11px; line-height:1.6; color:#8a8f98; }
+  .qwarning { background:#fdeceb; border:1px solid #f3c6c2; color:#8a231c; border-radius:8px; padding:14px 16px; font-size:13px; margin:0 28px 0 28px; }
+  .source-list { font-size:11.5px; color:#5b6068; }
+  .source-list a { color:#1a56b3; text-decoration:none; }
+  .term-name { font-weight:700; color:#0f1720; }
+  a { color:#1a56b3; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="header">
+    <div class="brand">AI Market Morning Desk</div>
+    <h1>Market Intelligence &amp; Trading Tutor</h1>
+    <div class="meta">
+      {{ report.run_date }} &nbsp;·&nbsp; Generated {{ report.generated_at | sgt("%H:%M %Z") }} &nbsp;·&nbsp; {{ report.timezone }}
+    </div>
+  </div>
+
+  {% if report.data_quality.degraded_mode %}
+  <div class="qwarning" style="margin-top:18px;">
+    <strong>⚠ DATA QUALITY WARNING — DEGRADED MODE</strong><br>
+    This report did not meet the normal minimum data-quality bar. Reasons:
+    <ul>
+      {% for reason in report.data_quality.reasons %}<li>{{ reason }}</li>{% endfor %}
+    </ul>
+    Treat conclusions below with extra caution and verify against primary sources.
+  </div>
+  {% endif %}
+
+  <!-- 1. 60-SECOND MARKET VIEW -->
+  <div class="section">
+    <p class="section-title">1 · 60-Second Market View</p>
+    <div class="card">
+      <span class="badge {{ report.regime.labels[0].value | badge_class if report.regime.labels else '' }}">
+        {{ report.regime.labels | map(attribute='value') | join(' · ') }}
+      </span>
+      <span class="badge badge-neutral">Confidence {{ report.regime.confidence_pct }}%</span>
+      <p style="margin-top:10px;">{{ report.one_sentence_summary or report.regime.summary }}</p>
+    </div>
+    <div class="label">Three things that matter today</div>
+    <ol class="three-things">
+      {% for item in report.three_things_that_matter %}<li>{{ item }}</li>{% endfor %}
+    </ol>
+    {% if report.main_risk_today %}
+    <div class="risk-box"><strong>Main risk today:</strong> {{ report.main_risk_today }}</div>
+    {% endif %}
+  </div>
+
+  <!-- 2. OVERNIGHT MARKET DASHBOARD -->
+  <div class="section">
+    <p class="section-title">2 · Overnight Market Dashboard</p>
+    <table>
+      <tr><th>Asset</th><th class="num">1D</th><th class="num">5D</th></tr>
+      {% set ns = namespace(last_group="") %}
+      {% for asset in report.market_snapshot.assets %}
+        {% if asset.group != ns.last_group %}
+          <tr class="group-row"><td colspan="3">{{ asset.group }}</td></tr>
+          {% set ns.last_group = asset.group %}
+        {% endif %}
+        <tr>
+          <td>{{ asset.display_name }}{% if asset.is_stale %} <span style="color:#b3261e;">·stale</span>{% endif %}</td>
+          <td class="num {{ 'pos' if (asset.daily_pct or 0) > 0 else 'neg' if (asset.daily_pct or 0) < 0 else '' }}">{{ asset.daily_pct | pct }}</td>
+          <td class="num {{ 'pos' if (asset.return_5d_pct or 0) > 0 else 'neg' if (asset.return_5d_pct or 0) < 0 else '' }}">{{ asset.return_5d_pct | pct }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <!-- 3. WHAT THE MARKET IS TRADING -->
+  <div class="section">
+    <p class="section-title">3 · What the Market Is Trading</p>
+    <div class="card"><p>{{ report.dominant_narrative or "Not available for this run." }}</p></div>
+  </div>
+
+  <!-- 4. MACRO STORIES -->
+  <div class="section">
+    <p class="section-title">4 · Macro Stories</p>
+    {% if report.macro_stories %}
+      {% for s in report.macro_stories %}
+      <div class="card">
+        <h2 class="item-title">{{ s.title }}</h2>
+        <div class="label">Fact</div><p>{{ s.fact }}</p>
+        <div class="label">Why it matters</div><p>{{ s.why_it_matters }}</p>
+        {% if s.what_to_watch_next %}<div class="label">What to watch</div><p>{{ s.what_to_watch_next }}</p>{% endif %}
+        <div class="label">Sources</div><p class="source-list">{{ s.source_names | join(', ') }}</p>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p>No high-importance macro stories identified for this run.</p>
+    {% endif %}
+  </div>
+
+  <!-- 5. SECTOR & THEME MAP -->
+  <div class="section">
+    <p class="section-title">5 · Sector &amp; Theme Map</p>
+    {% for t in report.theme_views %}
+    <div class="card">
+      <h2 class="item-title">{{ t.theme_name }}
+        <span class="badge {{ t.view.value | badge_class }}">{{ t.view.value | replace('_',' ') }}</span>
+        <span class="badge {{ t.momentum.value | badge_class }}">{{ t.momentum.value }}</span>
+      </h2>
+      <div class="label">Evidence</div>
+      <ul>{% for e in t.evidence %}<li>{{ e }}</li>{% endfor %}</ul>
+      {% if t.risk %}<div class="label">Risk / counterargument</div><p>{{ t.risk }}</p>{% endif %}
+    </div>
+    {% else %}
+      <p>No theme views available for this run.</p>
+    {% endfor %}
+  </div>
+
+  <!-- 6. WHAT ACTUALLY MATTERED OVERNIGHT -->
+  <div class="section">
+    <p class="section-title">6 · What Actually Mattered Overnight</p>
+    {% for s in report.top_stories %}
+    <div class="card">
+      <h2 class="item-title">{{ s.title }} <span class="badge badge-neutral">{{ s.importance.value }}</span></h2>
+      <div class="label">Fact</div><p>{{ s.fact }}</p>
+      <div class="label">Why it matters</div><p>{{ s.why_it_matters }}</p>
+      {% if s.first_order_effect %}<div class="label">First-order effect</div><p>{{ s.first_order_effect }}</p>{% endif %}
+      {% if s.second_order_effect %}<div class="label">Second-order effect</div><p>{{ s.second_order_effect }}</p>{% endif %}
+      {% if s.who_benefits %}<div class="label">Who benefits</div><p>{{ s.who_benefits | join(', ') }}</p>{% endif %}
+      {% if s.who_may_be_hurt %}<div class="label">Who may be hurt</div><p>{{ s.who_may_be_hurt | join(', ') }}</p>{% endif %}
+      {% if s.is_priced_in %}<div class="label">Is it priced in?</div><p>{{ s.is_priced_in }}</p>{% endif %}
+      {% if s.what_to_watch_next %}<div class="label">What to watch next</div><p>{{ s.what_to_watch_next }}</p>{% endif %}
+      {% if s.what_would_invalidate %}<div class="label">What would invalidate this view</div><p>{{ s.what_would_invalidate }}</p>{% endif %}
+      <div class="label">Confidence</div><p>{{ s.confidence_pct }}%</p>
+      <div class="label">Sources</div><p class="source-list">{{ s.source_names | join(', ') }}
+        {% for u in s.urls %} · <a href="{{ u }}">link</a>{% endfor %}</p>
+    </div>
+    {% else %}
+      <p>No stories cleared the importance bar for this run.</p>
+    {% endfor %}
+  </div>
+
+  <!-- 7. COMPANY RADAR -->
+  <div class="section">
+    <p class="section-title">7 · Company Radar</p>
+    {% for c in report.company_radar %}
+    <div class="card">
+      <h2 class="item-title">{{ c.ticker }} — {{ c.company_name }}</h2>
+      <p>{{ c.headline }}</p>
+      {% if c.relevant_driver %}<div class="label">Relevant earnings driver</div><p>{{ c.relevant_driver.value }}</p>{% endif %}
+      <div class="label">Explanation</div><p>{{ c.explanation }}</p>
+      <div class="label">Confidence</div><p>{{ c.confidence_pct }}%</p>
+    </div>
+    {% else %}
+      <p>No company-specific items cleared the bar for this run.</p>
+    {% endfor %}
+  </div>
+
+  <!-- 8. TRADING IMPLICATIONS -->
+  <div class="section">
+    <p class="section-title">8 · Trading Implications</p>
+    {% if report.trade_ideas %}
+      {% for i in report.trade_ideas %}
+      <div class="card">
+        <h2 class="item-title">{{ i.direction.value }}{% if i.ticker %} — {{ i.ticker }}{% endif %}</h2>
+        {% if i.thesis %}<div class="label">Thesis</div><p>{{ i.thesis }}</p>{% endif %}
+        {% if i.catalyst %}<div class="label">Catalyst</div><p>{{ i.catalyst }}</p>{% endif %}
+        {% if i.confirmation_required %}<div class="label">Confirmation required</div><p>{{ i.confirmation_required }}</p>{% endif %}
+        {% if i.entry_condition %}<div class="label">Entry condition</div><p>{{ i.entry_condition }}</p>{% endif %}
+        {% if i.invalidation_condition %}<div class="label">Invalidation condition</div><p>{{ i.invalidation_condition }}</p>{% endif %}
+        {% if i.time_horizon %}<div class="label">Time horizon</div><p>{{ i.time_horizon }}</p>{% endif %}
+        {% if i.key_risks %}<div class="label">Key risks</div><ul>{% for r in i.key_risks %}<li>{{ r }}</li>{% endfor %}</ul>{% endif %}
+        <div class="label">Confidence</div><p>{{ i.confidence_pct }}%</p>
+        {% if i.why_not_to_trade %}<div class="label">Why NOT to trade this</div><p>{{ i.why_not_to_trade }}</p>{% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="no-trade-box">NO HIGH-CONVICTION SETUP TODAY</div>
+    {% endif %}
+  </div>
+
+  <!-- 9. TODAY'S RISK CALENDAR -->
+  <div class="section">
+    <p class="section-title">9 · Today's Risk Calendar</p>
+    <table>
+      <tr><th>Event</th><th>Time</th><th>Importance</th></tr>
+      {% for e in report.macro_events_today %}
+      <tr>
+        <td>{{ e.event }}{% if e.previous %}<br><span class="source-list">Prev: {{ e.previous }}</span>{% endif %}</td>
+        <td>{{ e.local_time_label or (e.scheduled_at_sgt | sgt if e.scheduled_at_sgt else "—") }}</td>
+        <td><span class="badge {{ 'badge-bearish' if e.importance.value == 'HIGH' else 'badge-neutral' }}">{{ e.importance.value }}</span></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3">No major scheduled events identified for today.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <!-- 10. LEARN ONE THING TODAY -->
+  {% if report.learn_one_thing %}
+  <div class="section">
+    <p class="section-title">10 · Learn One Thing Today</p>
+    <div class="card">
+      <h2 class="item-title"><span class="badge badge-learn">LEARN</span> {{ report.learn_one_thing.title }}</h2>
+      <p>{{ report.learn_one_thing.body }}</p>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 11. TERMINOLOGY -->
+  {% if report.terminology %}
+  <div class="section">
+    <p class="section-title">11 · Terminology</p>
+    {% for term in report.terminology %}
+    <div class="card">
+      <p><span class="term-name">{{ term.term }}</span> — {{ term.plain_definition }}</p>
+      <div class="label">Why traders care</div><p>{{ term.why_traders_care }}</p>
+      {% if term.todays_example %}<div class="label">Today's example</div><p>{{ term.todays_example }}</p>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if report.yesterday_review %}
+  <div class="section">
+    <p class="section-title">Yesterday's Calls Review</p>
+    {% for r in report.yesterday_review %}
+    <div class="card">
+      <h2 class="item-title">{{ r.ticker }} — {{ r.direction.value }}</h2>
+      <p>{{ r.original_thesis }}</p>
+      {% if r.subsequent_move_pct is not none %}<div class="label">Subsequent move</div><p>{{ r.subsequent_move_pct | pct }}</p>{% endif %}
+      {% if r.lesson %}<div class="label">Lesson</div><p>{{ r.lesson }}</p>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- 12. SOURCE LINKS -->
+  <div class="section">
+    <p class="section-title">12 · Source Links</p>
+    <p class="source-list">
+      {% for src in report.source_index %}
+        {{ src.source_name }} (Tier {{ src.tier.value }}){% if src.url %} — <a href="{{ src.url }}">{{ src.url }}</a>{% endif %}<br>
+      {% else %}
+        See individual story/source citations above.
+      {% endfor %}
+    </p>
+  </div>
+
+  <div class="footer">
+    {{ report.disclaimer }}
+  </div>
+
+</div>
+</body>
+</html>

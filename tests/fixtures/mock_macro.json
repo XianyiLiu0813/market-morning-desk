@@ -1,0 +1,42 @@
+[
+  {
+    "event": "US Initial Jobless Claims",
+    "hour_sgt": 20, "minute_sgt": 30,
+    "local_time_label": "8:30am ET",
+    "expected": "225K",
+    "previous": "220K",
+    "actual": null,
+    "importance": "MEDIUM",
+    "notes": "Weekly claims data; watch for labor-market softening signals."
+  },
+  {
+    "event": "US 30-Year Treasury Bond Auction",
+    "hour_sgt": 1, "minute_sgt": 0,
+    "local_time_label": "1:00pm ET (next day)",
+    "expected": null,
+    "previous": "Bid-to-cover 2.38x",
+    "actual": null,
+    "importance": "MEDIUM",
+    "notes": "Follows softer 10Y auction demand; a weak result could extend the long-end yield move."
+  },
+  {
+    "event": "Fed speaker (regional president, text release)",
+    "hour_sgt": 22, "minute_sgt": 0,
+    "local_time_label": "10:00am ET",
+    "expected": null,
+    "previous": null,
+    "actual": null,
+    "importance": "HIGH",
+    "notes": "Follow-up commentary possible after hawkish auction-week remarks."
+  },
+  {
+    "event": "China house prices / property data",
+    "hour_sgt": 9, "minute_sgt": 30,
+    "local_time_label": "9:30am CST",
+    "expected": null,
+    "previous": null,
+    "actual": null,
+    "importance": "MEDIUM",
+    "notes": "Relevant given overnight PBOC rate cut and property-support signaling."
+  }
+]

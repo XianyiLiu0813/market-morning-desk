@@ -1,0 +1,61 @@
+# News/data source registry and tier weighting (Section 8).
+# `tier` drives the source_quality sub-score in processing/scoring.py
+# (tier 1 = 5.0, tier 2 = 3.5, tier 3 = 2.0, tier 4 = 0.5 - see scoring.py).
+#
+# `kind` documents how a real implementation would fetch it:
+#   api    - vendor REST API (needs an API key)
+#   rss    - public RSS/Atom feed
+#   edgar  - SEC EDGAR full-text / submissions API (no key required)
+#   direct - official government/agency site or investor-relations page
+
+tiers:
+  1:
+    name: "Primary sources"
+    sources:
+      - { id: "sec_edgar", name: "SEC EDGAR", kind: "edgar", url: "https://www.sec.gov/cgi-bin/browse-edgar" }
+      - { id: "company_ir", name: "Company Investor Relations", kind: "direct" }
+      - { id: "hkex_announcements", name: "HKEX Company Announcements", kind: "direct", url: "https://www1.hkexnews.hk" }
+      - { id: "federal_reserve", name: "Federal Reserve", kind: "rss", url: "https://www.federalreserve.gov/feeds/press_all.xml" }
+      - { id: "us_treasury", name: "US Treasury", kind: "direct", url: "https://home.treasury.gov" }
+      - { id: "bls", name: "US Bureau of Labor Statistics", kind: "api", url: "https://www.bls.gov" }
+      - { id: "bea", name: "US Bureau of Economic Analysis", kind: "api", url: "https://www.bea.gov" }
+      - { id: "pboc", name: "People's Bank of China", kind: "direct", url: "http://www.pbc.gov.cn" }
+
+  2:
+    name: "High-quality financial media"
+    # NOTE: Reuters retired its public RSS feeds years ago (no free feed
+    # exists any more - Reuters news requires a paid API/license), so it's
+    # kept here as kind:api (no url) for documentation only; it is NOT
+    # fetched by build_news_providers() in real mode. Bloomberg is the same
+    # situation. Every other row below was verified live and returns
+    # entries as of this writing.
+    sources:
+      - { id: "reuters", name: "Reuters", kind: "api" }
+      - { id: "bloomberg", name: "Bloomberg", kind: "api" }
+      - { id: "wsj_markets", name: "Wall Street Journal (Markets)", kind: "rss", url: "https://feeds.a.dj.com/rss/RSSMarketsMain.xml" }
+      - { id: "wsj_world", name: "Wall Street Journal (World)", kind: "rss", url: "https://feeds.a.dj.com/rss/RSSWorldNews.xml" }
+      - { id: "cnbc", name: "CNBC", kind: "rss", url: "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114" }
+      - { id: "cnbc_world", name: "CNBC World", kind: "rss", url: "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100727362" }
+      - { id: "nikkei", name: "Nikkei Asia", kind: "rss", url: "https://asia.nikkei.com/rss/feed/nar" }
+      - { id: "scmp", name: "South China Morning Post (Business)", kind: "rss", url: "https://www.scmp.com/rss/91/feed" }
+      - { id: "ft", name: "Financial Times", kind: "rss", url: "https://www.ft.com/rss/home" }
+      - { id: "caixin", name: "Caixin Global", kind: "api" }
+
+  3:
+    name: "Secondary media"
+    sources:
+      - { id: "seeking_alpha", name: "Seeking Alpha (Market Currents)", kind: "rss", url: "https://seekingalpha.com/market_currents.xml" }
+      - { id: "marketwatch", name: "MarketWatch (Top Stories)", kind: "rss", url: "https://www.marketwatch.com/rss/topstories" }
+      - { id: "yahoo_finance", name: "Yahoo Finance", kind: "rss", url: "https://finance.yahoo.com/news/rssindex" }
+      - { id: "investing_com", name: "Investing.com", kind: "rss", url: "https://www.investing.com/rss/news.rss" }
+
+  4:
+    name: "Social / market chatter"
+    note: "Not enabled in V1. Architecture supports adding a NewsProvider for this tier later."
+    sources: []
+
+# Search/aggregation APIs usable as a NewsProvider backend (need API keys):
+search_apis:
+  - { id: "newsapi", name: "NewsAPI.org", env_key: "NEWSAPI_KEY" }
+  - { id: "finnhub_news", name: "Finnhub Company/Market News", env_key: "FINNHUB_API_KEY" }
+  - { id: "polygon_news", name: "Polygon.io News", env_key: "POLYGON_API_KEY" }
