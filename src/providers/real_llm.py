@@ -73,16 +73,40 @@ class OpenAILLMProvider(LLMProvider):
         max_tokens: int = 4096,
         temperature: float = 0.2,
     ) -> str:
-        response = self.client.chat.completions.create(
-            model=self.model,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-        )
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+        # Newer "reasoning" model families (o1/o3/gpt-5-style) reject the
+        # legacy `max_tokens` param (must use `max_completion_tokens`) and
+        # often reject any non-default `temperature`. Try the modern/full
+        # request first, then degrade parameter-by-parameter on the
+        # specific 400 errors those models raise, rather than guessing
+        # up front which family `self.model` belongs to.
+        attempts = [
+            {"max_completion_tokens": max_tokens, "temperature": temperature},
+            {"max_completion_tokens": max_tokens},
+            {"max_tokens": max_tokens},
+        ]
+        last_exc: Exception = RuntimeError("unreachable")
+        for kwargs in attempts:
+            try:
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    response_format={"type": "json_object"},
+                    messages=messages,
+                    **kwargs,
+                )
+                break
+            except Exception as exc:  # noqa: BLE001
+                last_exc = exc
+                msg = str(exc).lower()
+                if "max_tokens" in msg or "max_completion_tokens" in msg or "temperature" in msg:
+                    continue  # try the next, more conservative parameter set
+                raise
+        else:
+            raise last_exc
+
         text = response.choices[0].message.content or "{}"
         usage = getattr(response, "usage", None)
         if usage:
