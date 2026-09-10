@@ -17,6 +17,7 @@ from src.providers.llm_base import LLMProvider
 from src.providers.macro_base import MacroProvider
 from src.providers.market_base import MarketDataProvider
 from src.providers.news_base import NewsProvider
+from src.providers.real_market import RATE_SYMBOLS
 from src.utils.time import now_sgt, now_utc
 
 FIXTURES_DIR = Path(__file__).resolve().parents[2] / "tests" / "fixtures"
@@ -53,6 +54,7 @@ class MockMarketDataProvider(MarketDataProvider):
                     as_of=as_of,
                     data_source="mock",
                     is_stale=False,
+                    is_rate=sym in RATE_SYMBOLS,
                 )
             )
         return out

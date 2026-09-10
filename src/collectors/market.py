@@ -2,6 +2,14 @@
 
 Wraps whichever MarketDataProvider is configured (mock or real) and applies
 the data-quality checks from Section 34 (freshness, minimum asset count).
+
+V2: the fetched symbol list is the UNION of config/assets.yaml (indices,
+rates, FX, commodities, theme ETFs) AND config/watchlist.yaml (individual
+company tickers) - not just the former. Company Radar / story-level price
+confirmation (Part 9) needs a validated price for whichever companies show
+up in the news, and Part 3's "one single ValidatedMarketSnapshot" promise
+only holds if that snapshot actually contains watchlist company prices,
+not just index-level data.
 """
 from __future__ import annotations
 
@@ -16,6 +24,8 @@ from src.utils.time import age_minutes, now_sgt, now_utc
 
 logger = logging.getLogger("morning_desk")
 
+WATCHLIST_GROUP_LABEL = "重点个股"
+
 
 def flatten_asset_symbols(settings: Settings) -> List[Tuple[str, str, str]]:
     """Return (symbol, display_name, group) tuples from config/assets.yaml."""
@@ -26,11 +36,27 @@ def flatten_asset_symbols(settings: Settings) -> List[Tuple[str, str, str]]:
     return out
 
 
+def flatten_watchlist_symbols(settings: Settings) -> List[Tuple[str, str, str]]:
+    """Return (symbol, display_name, group) tuples from config/watchlist.yaml,
+    so individual companies get a validated price too - see module docstring."""
+    out = []
+    for entries in settings.watchlist.values():
+        for entry in entries:
+            out.append((entry["ticker"], entry.get("name", entry["ticker"]), WATCHLIST_GROUP_LABEL))
+    return out
+
+
 def collect_market_snapshot(
     provider: MarketDataProvider, settings: Settings, run_date: date
 ) -> MarketSnapshot:
     asset_defs = flatten_asset_symbols(settings)
-    symbols = [s for s, _, _ in asset_defs]
+    watchlist_defs = flatten_watchlist_symbols(settings)
+    # De-duplicate by symbol (a ticker could theoretically appear in both
+    # lists) while preserving the asset_defs entry as authoritative for
+    # display/group metadata when there's a clash.
+    seen_symbols = {s for s, _, _ in asset_defs}
+    combined_defs = asset_defs + [d for d in watchlist_defs if d[0] not in seen_symbols]
+    symbols = [s for s, _, _ in combined_defs]
 
     warnings: List[str] = []
     try:
@@ -42,7 +68,7 @@ def collect_market_snapshot(
 
     # Backfill group/display metadata in case a provider only returns bare
     # price data keyed by symbol.
-    meta_by_symbol = {s: (d, g) for s, d, g in asset_defs}
+    meta_by_symbol = {s: (d, g) for s, d, g in combined_defs}
     for asset in assets:
         if asset.symbol in meta_by_symbol:
             display, group = meta_by_symbol[asset.symbol]

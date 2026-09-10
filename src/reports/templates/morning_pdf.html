@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>AI Market Morning Desk — {{ report.run_date }}</title>
 <style>
-  @page { size: A4; margin: 14mm 13mm 16mm 13mm; }
+  @page { size: A4; margin: 13mm 12mm 15mm 12mm; }
   * { box-sizing: border-box; }
   /* Explicit CJK font names so Chinese text doesn't silently fall back to
      "no font found" (blank boxes/garbled glyphs) on a system that has a
@@ -12,15 +12,17 @@
      e.g. GitHub Actions runners after installing fonts-noto-cjk (see
      .github/workflows/morning.yml). macOS/Windows users get PingFang
      SC/Microsoft YaHei via the system-ui fonts already. */
-  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC","Segoe UI",Helvetica,Arial,sans-serif; color:#1a1d23; font-size:8.6pt; line-height:1.38; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC","Segoe UI",Helvetica,Arial,sans-serif; color:#1a1d23; font-size:8.3pt; line-height:1.36; }
   h1,h2,h3,p,ul,ol { margin:0; }
-  .header { display:flex; justify-content:space-between; align-items:baseline; border-bottom:2px solid #0f1720; padding-bottom:6px; margin-bottom:10px; }
+  .header { display:flex; justify-content:space-between; align-items:baseline; border-bottom:2px solid #0f1720; padding-bottom:6px; margin-bottom:8px; }
   .header .brand { font-size:14pt; font-weight:800; color:#0f1720; }
-  .header .sub { font-size:7.6pt; color:#6b7280; }
-  .header .meta { text-align:right; font-size:7.6pt; color:#6b7280; }
-  .section { margin-bottom:9px; }
-  .section-title { font-size:8pt; font-weight:800; text-transform:uppercase; letter-spacing:0.6px; color:#0f1720; border-bottom:1px solid #d7dae0; padding-bottom:2px; margin-bottom:5px; page-break-after:avoid; }
+  .header .sub { font-size:7.4pt; color:#6b7280; }
+  .header .meta { text-align:right; font-size:7.4pt; color:#6b7280; }
+  .section { margin-bottom:8px; }
+  .section-title { font-size:7.8pt; font-weight:800; text-transform:uppercase; letter-spacing:0.6px; color:#0f1720; border-bottom:1px solid #d7dae0; padding-bottom:2px; margin-bottom:5px; page-break-after:avoid; }
   .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; }
+  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px 8px; }
+  .grid6 { display:grid; grid-template-columns:repeat(6,1fr); gap:5px; }
   /* CSS grid stretches every cell in a row to match the tallest cell in
      that row - fine for the roughly-uniform-height cards used elsewhere,
      but disastrous for the dashboard's variable-height per-group tables
@@ -31,31 +33,45 @@
   .dash-columns table.dash { break-inside:avoid; margin-bottom:6px; width:100%; }
   .card { background:#f7f8fa; border:1px solid #e4e6ea; border-radius:4px; padding:6px 8px; margin-bottom:5px; page-break-inside:avoid; }
   .card:last-child { margin-bottom:0; }
-  .item-title { font-size:8.4pt; font-weight:700; color:#0f1720; margin-bottom:2px; }
-  .label { font-size:6.6pt; font-weight:800; text-transform:uppercase; letter-spacing:0.4px; color:#6b7280; margin-top:3px; }
+  .item-title { font-size:8.2pt; font-weight:700; color:#0f1720; margin-bottom:2px; }
+  .label { font-size:6.5pt; font-weight:800; text-transform:uppercase; letter-spacing:0.4px; color:#6b7280; margin-top:3px; }
   .label:first-of-type { margin-top:0; }
-  .badge { display:inline-block; font-size:6.6pt; font-weight:800; letter-spacing:0.3px; text-transform:uppercase; padding:1.5px 5px; border-radius:3px; margin-right:4px; }
+  .badge { display:inline-block; font-size:6.5pt; font-weight:800; letter-spacing:0.3px; text-transform:uppercase; padding:1.5px 5px; border-radius:3px; margin-right:4px; }
   .badge-bullish { background:#e6f4ea; color:#1e7e34; }
   .badge-bearish { background:#fbeaea; color:#b3261e; }
   .badge-neutral { background:#eef0f3; color:#4a4f57; }
-  table.dash { width:100%; border-collapse:collapse; font-size:7.4pt; }
-  table.dash th { text-align:left; font-size:6.6pt; text-transform:uppercase; color:#6b7280; border-bottom:1px solid #d7dae0; padding:2px 3px; }
+  table.dash { width:100%; border-collapse:collapse; font-size:7.3pt; }
+  table.dash th { text-align:left; font-size:6.5pt; text-transform:uppercase; color:#6b7280; border-bottom:1px solid #d7dae0; padding:2px 3px; }
   table.dash td { padding:1.6px 3px; border-bottom:1px solid #eef0f2; }
   table.dash td.num { text-align:right; font-variant-numeric:tabular-nums; }
   .pos { color:#1e7e34; font-weight:700; }
   .neg { color:#b3261e; font-weight:700; }
-  .group-hdr td { font-weight:800; font-size:6.6pt; text-transform:uppercase; color:#0f1720; padding-top:4px; }
+  .group-hdr td { font-weight:800; font-size:6.5pt; text-transform:uppercase; color:#0f1720; padding-top:4px; }
   ul.tight { margin:0; padding-left:12px; }
   ul.tight li { margin-bottom:1.5px; }
-  .risk-box { background:#fff8ec; border:1px solid #f2e0b8; border-radius:4px; padding:5px 7px; font-size:8pt; color:#7a5b12; margin-top:5px; }
+  .risk-box { background:#fff8ec; border:1px solid #f2e0b8; border-radius:4px; padding:5px 7px; font-size:7.8pt; color:#7a5b12; margin-top:5px; }
   .no-trade { background:#eef0f3; border:1px dashed #c7cbd1; border-radius:4px; padding:8px; text-align:center; font-size:8pt; font-weight:700; color:#4a4f57; }
-  .footer { margin-top:8px; padding-top:5px; border-top:1px solid #d7dae0; font-size:6.4pt; color:#8a8f98; line-height:1.4; }
-  .risk-cal td { font-size:7.2pt; }
+  .footer { margin-top:8px; padding-top:5px; border-top:1px solid #d7dae0; font-size:6.3pt; color:#8a8f98; line-height:1.4; }
+  .risk-cal td { font-size:7pt; }
   .term-name { font-weight:700; }
   .page-break { page-break-before:always; }
   .theme-card { border-left:3px solid #c7cbd1; }
   .theme-card.bull { border-left-color:#1e7e34; }
   .theme-card.bear { border-left-color:#b3261e; }
+  /* Trader's Dashboard: 6 small state tiles in a row */
+  .state-tile { background:#f7f8fa; border:1px solid #e4e6ea; border-radius:4px; padding:5px 4px; text-align:center; }
+  .state-tile .state-label { font-size:6.3pt; color:#6b7280; text-transform:uppercase; letter-spacing:0.3px; }
+  .state-tile .state-value { font-size:8.6pt; font-weight:800; color:#0f1720; margin-top:1px; }
+  .state-tile .state-value.improve { color:#1e7e34; }
+  .state-tile .state-value.worsen { color:#b3261e; }
+  .proxy-note { font-size:6.2pt; color:#9aa0a8; margin-top:6px; }
+  /* Exception-based theme table */
+  table.theme-table { width:100%; border-collapse:collapse; font-size:7.3pt; }
+  table.theme-table th { text-align:left; font-size:6.3pt; text-transform:uppercase; color:#6b7280; border-bottom:1px solid #d7dae0; padding:3px 4px; }
+  table.theme-table td { padding:3px 4px; border-bottom:1px solid #eef0f2; vertical-align:top; }
+  .changed-row { background:#fbf6ea; }
+  .wct-list { margin:0; padding-left:14px; }
+  .wct-list li { margin-bottom:2px; font-size:8pt; }
 </style>
 </head>
 <body>
@@ -74,13 +90,29 @@
 {% if report.data_quality.degraded_mode %}
 <div class="risk-box" style="border-color:#f3c6c2;background:#fdeceb;color:#8a231c;">
   <strong>⚠ 数据质量提示 —— 降级模式</strong>
-  {{ report.data_quality.reasons | join('; ') }}
+  {{ report.data_quality.reasons | join('；') }}
 </div>
 {% endif %}
 
-<!-- 60-second view -->
+<!-- 1. TRADER'S DASHBOARD -->
+{% if report.dashboard %}
 <div class="section">
-  <div class="section-title">60秒读懂市场</div>
+  <div class="section-title">今日交易状态 · Trader's Dashboard</div>
+  <div class="grid6">
+    {% set d = report.dashboard %}
+    <div class="state-tile"><div class="state-label">风险偏好</div><div class="state-value {{ 'improve' if d.risk_appetite == '改善' else 'worsen' if d.risk_appetite == '恶化' else '' }}">{{ d.risk_appetite }}</div></div>
+    <div class="state-tile"><div class="state-label">利率</div><div class="state-value {{ 'worsen' if d.rates == '上行' else 'improve' if d.rates == '下行' else '' }}">{{ d.rates }}</div></div>
+    <div class="state-tile"><div class="state-label">美元</div><div class="state-value">{{ d.usd }}</div></div>
+    <div class="state-tile"><div class="state-label">波动率</div><div class="state-value {{ 'improve' if d.volatility == '下降' else 'worsen' if d.volatility == '上升' else '' }}">{{ d.volatility }}</div></div>
+    <div class="state-tile"><div class="state-label">市场宽度*</div><div class="state-value {{ 'improve' if d.breadth == '偏宽' else 'worsen' if d.breadth == '偏窄' else '' }}">{{ d.breadth }}</div></div>
+    <div class="state-tile"><div class="state-label">流动性*</div><div class="state-value {{ 'improve' if d.liquidity == '支持性' else 'worsen' if d.liquidity == '收紧' else '' }}">{{ d.liquidity }}</div></div>
+  </div>
+  <div class="proxy-note">* 市场宽度、流动性为间接代理指标（IWM/SPY 相对强弱、VIX+短端利率），非直接测量数据。</div>
+</div>
+{% endif %}
+
+<!-- Market Regime -->
+<div class="section">
   <div class="card">
     <span class="badge {{ report.regime.labels[0].value | badge_class if report.regime.labels else '' }}">
       {{ report.regime.labels | map(attribute='value') | join(' · ') }}
@@ -88,7 +120,23 @@
     <span class="badge badge-neutral">置信度 {{ report.regime.confidence_pct }}%</span>
     <p style="margin-top:4px;">{{ report.one_sentence_summary or report.regime.summary }}</p>
   </div>
-  <div class="grid2" style="margin-top:5px;">
+</div>
+
+<!-- 2. WHAT CHANGED OVERNIGHT -->
+<div class="section">
+  <div class="section-title">隔夜发生了什么变化 · What Changed Overnight</div>
+  {% if report.what_changed_overnight %}
+  <ul class="wct-list">
+    {% for item in report.what_changed_overnight %}<li>{{ item }}</li>{% endfor %}
+  </ul>
+  {% else %}
+  <p style="color:#6b7280;">相较昨日，未检测到主题判断或关键资产的重大变化。</p>
+  {% endif %}
+</div>
+
+<!-- 3. THREE THINGS + WHAT MARKET IS TRADING -->
+<div class="section">
+  <div class="grid2">
     <div>
       <div class="label">今日三件大事</div>
       <ol class="tight" style="padding-left:14px;">
@@ -105,13 +153,23 @@
   {% endif %}
 </div>
 
-<!-- Market dashboard: compact 3-column -->
+<!-- 4. OVERNIGHT MARKET DASHBOARD -->
 <div class="section">
   <div class="section-title">隔夜市场仪表盘</div>
   <div class="dash-columns">
-    {% for group_name, assets in report.market_snapshot.assets | groupby('group') %}
+    {% for group_name, assets in report.market_snapshot.assets | rejectattr('group', 'equalto', '重点个股') | list | groupby('group') %}
     <table class="dash">
       <tr class="group-hdr"><td colspan="3">{{ group_name }}</td></tr>
+      {% if assets[0].is_rate %}
+      <tr><th>资产</th><th class="num">水平</th><th class="num">变动</th></tr>
+      {% for a in assets %}
+      <tr>
+        <td>{{ a.display_name }}</td>
+        <td class="num">{{ a.last_price | level }}%</td>
+        <td class="num {{ 'pos' if (a.bp_change or 0) > 0 else 'neg' if (a.bp_change or 0) < 0 else '' }}">{{ a | bp }}</td>
+      </tr>
+      {% endfor %}
+      {% else %}
       <tr><th>资产</th><th class="num">1日</th><th class="num">5日</th></tr>
       {% for a in assets %}
       <tr>
@@ -120,6 +178,7 @@
         <td class="num {{ 'pos' if (a.return_5d_pct or 0) > 0 else 'neg' if (a.return_5d_pct or 0) < 0 else '' }}">{{ a.return_5d_pct | pct }}</td>
       </tr>
       {% endfor %}
+      {% endif %}
     </table>
     {% endfor %}
   </div>
@@ -132,31 +191,44 @@
   {% for s in report.macro_stories %}
   <div class="card">
     <div class="item-title">{{ s.title }}</div>
-    <p>{{ s.fact }}</p>
+    <p><strong>事实：</strong>{{ s.fact }}</p>
     <div class="label">为什么重要</div><p>{{ s.why_it_matters }}</p>
   </div>
   {% endfor %}
 </div>
 {% endif %}
 
-<!-- Sector/theme map -->
+<!-- 6. THEME MAP (exception-based: compact table, only changed/notable themes expand) -->
 <div class="section">
-  <div class="section-title">行业与主题地图</div>
-  <div class="grid2">
+  <div class="section-title">行业与主题地图 · Theme Map</div>
+  <table class="theme-table">
+    <tr><th>主题</th><th>结构性</th><th>战术性</th><th>价格确认</th><th>核心驱动</th></tr>
     {% for t in report.theme_views %}
-    <div class="card theme-card {{ 'bull' if 'BULLISH' in t.view.value else 'bear' if 'BEARISH' in t.view.value else '' }}">
-      <div class="item-title">{{ t.theme_name }}
-        <span class="badge {{ t.view.value | badge_class }}">{{ t.view.value | replace('_',' ') }}</span>
-      </div>
-      <p>{{ t.evidence | join(' · ') }}</p>
+    <tr class="{{ 'changed-row' if t.is_meaningful_change else '' }}">
+      <td>{{ t.theme_name }}</td>
+      <td><span class="badge {{ t.structural_view.value | badge_class }}">{{ t.structural_view.value | replace('_',' ') }}</span></td>
+      <td><span class="badge {{ t.tactical_view.value | badge_class }}">{{ t.tactical_view.value | replace('_',' ') }}</span></td>
+      <td>{{ t.price_confirmation }}</td>
+      <td>{{ t.evidence[0] if t.evidence else '—' }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% set expanded_themes = report.theme_views | selectattr('is_meaningful_change') | list %}
+  {% if expanded_themes %}
+  <div class="grid2" style="margin-top:6px;">
+    {% for t in expanded_themes %}
+    <div class="card theme-card {{ 'bull' if 'BULLISH' in t.structural_view.value else 'bear' if 'BEARISH' in t.structural_view.value else '' }}">
+      <div class="item-title">{{ t.theme_name }}</div>
+      <div class="label">结构性判断（多季度）</div><p>{{ t.structural_reason }}</p>
+      <div class="label">战术性判断（数天至数周）</div><p>{{ t.tactical_reason }}</p>
+      {% if t.risk %}<div class="label">主要风险</div><p>{{ t.risk }}</p>{% endif %}
     </div>
     {% endfor %}
   </div>
+  {% endif %}
 </div>
 
-<div class="page-break"></div>
-
-<!-- What actually mattered -->
+<!-- 7. WHAT ACTUALLY MATTERED -->
 <div class="section">
   <div class="section-title">隔夜真正重要的事</div>
   {% for s in report.top_stories %}
@@ -164,73 +236,100 @@
     <div class="item-title">{{ s.title }} <span class="badge badge-neutral">{{ s.importance.value }}</span></div>
     <p><strong>事实：</strong> {{ s.fact }}</p>
     <p><strong>为什么重要：</strong> {{ s.why_it_matters }}</p>
+    {% if s.price_check %}<p><strong>价格验证：</strong> {{ s.price_check | join(', ') }} — {{ s.market_impact }}</p>
+    {% elif s.market_impact %}<p><strong>市场反应：</strong> {{ s.market_impact }}</p>{% endif %}
+    {% if s.expectation_impact %}<p><strong>预期影响：</strong> {{ s.expectation_impact }}</p>{% endif %}
     {% if s.first_order_effect %}<p><strong>一级影响：</strong> {{ s.first_order_effect }}{% if s.second_order_effect %} &nbsp;|&nbsp; <strong>二级影响：</strong> {{ s.second_order_effect }}{% endif %}</p>{% endif %}
     <div class="label">信息来源</div><p>{{ s.source_names | join(', ') }}</p>
   </div>
   {% endfor %}
 </div>
 
-<!-- Company radar -->
+<!-- 7b. OTHER DEVELOPMENTS -->
+{% if report.other_developments %}
 <div class="section">
-  <div class="section-title">公司雷达</div>
+  <div class="section-title">其他动态 · Other Developments</div>
+  <ul class="tight" style="padding-left:14px;">
+    {% for title in report.other_developments %}<li>{{ title }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<!-- 8. COMPANY RADAR -->
+<div class="section">
+  <div class="section-title">公司雷达 · Company Radar</div>
   <div class="grid2">
     {% for c in report.company_radar %}
     <div class="card">
-      <div class="item-title">{{ c.ticker }} — {{ c.company_name }}</div>
-      <p>{{ c.explanation }}</p>
+      <div class="item-title">{{ c.ticker }} — {{ c.company_name }} <span class="badge {{ c.signal.value | badge_class }}">{{ c.signal.value }}</span></div>
+      <p><strong>发生了什么：</strong>{{ c.what_changed }}</p>
+      <div class="label">驱动因素解读</div><p>{{ c.driver_explanation }}</p>
+      {% if c.expectation_impact %}<div class="label">预期影响</div><p>{{ c.expectation_impact }}</p>{% endif %}
+      {% if c.price_check %}<div class="label">价格验证</div><p>{{ c.price_check | join(', ') }}</p>{% endif %}
+      {% if c.what_to_watch_next %}<div class="label">下一步关注</div><p>{{ c.what_to_watch_next }}</p>{% endif %}
     </div>
     {% endfor %}
   </div>
 </div>
 
-<!-- Trading implications -->
+<!-- 9. TRADE / WATCH / PASS -->
 <div class="section">
-  <div class="section-title">交易启示</div>
+  <div class="section-title">交易 / 观察 / 放弃 · Trade / Watch / Pass</div>
   {% if report.trade_ideas %}
     {% for i in report.trade_ideas %}
     <div class="card">
-      <div class="item-title">{{ i.direction.value }}{% if i.ticker %} — {{ i.ticker }}{% endif %}</div>
+      <div class="item-title">{{ i.direction.value }}{% if i.ticker %} — {{ i.ticker }}{% endif %}
+        {% if i.structural_view or i.tactical_view %}<span class="badge badge-neutral">{{ i.structural_view }} / {{ i.tactical_view }}</span>{% endif %}
+      </div>
       {% if i.thesis %}<p><strong>核心逻辑：</strong> {{ i.thesis }}</p>{% endif %}
+      {% if i.edge_or_mispricing %}<p><strong>市场可能错在哪里：</strong> {{ i.edge_or_mispricing }}</p>{% endif %}
       {% if i.invalidation_condition %}<p><strong>失效条件：</strong> {{ i.invalidation_condition }}</p>{% endif %}
       {% if i.why_not_to_trade %}<p><strong>为什么不建议现在交易：</strong> {{ i.why_not_to_trade }}</p>{% endif %}
+      {% if i.junior_lesson %}<p style="color:#6a3fb0;"><strong>给初级分析师的一课：</strong> {{ i.junior_lesson }}</p>{% endif %}
+      <div class="label">置信度</div><p>{{ i.confidence_level.value }}（{{ i.confidence_pct }}%）</p>
     </div>
     {% endfor %}
   {% else %}
-    <div class="no-trade">今日无高把握度交易机会</div>
+    <div class="no-trade">今日无高把握度交易机会 · NO HIGH-CONVICTION SETUP TODAY</div>
   {% endif %}
 </div>
 
-<div class="page-break"></div>
-
-<!-- Risk calendar -->
+<!-- 10. RISK CALENDAR -->
 <div class="section">
   <div class="section-title">今日风险日历</div>
   <table class="dash risk-cal">
-    <tr><th>事件</th><th>时间</th><th>重要性</th></tr>
+    <tr><th>事件</th><th>时间</th><th>一致预期</th><th>前值</th><th>重要性</th></tr>
     {% for e in report.macro_events_today %}
     <tr>
       <td>{{ e.event }}</td>
       <td>{{ e.local_time_label or (e.scheduled_at_sgt | sgt if e.scheduled_at_sgt else "—") }}</td>
+      <td>{{ e.expected or "—" }}</td>
+      <td>{{ e.previous or "—" }}</td>
       <td><span class="badge {{ 'badge-bearish' if e.importance.value == 'HIGH' else 'badge-neutral' }}">{{ e.importance.value }}</span></td>
     </tr>
+    {% if e.notes %}<tr><td colspan="5" style="color:#6b7280;">{{ e.notes }}</td></tr>{% endif %}
     {% else %}
-    <tr><td colspan="3">今日暂无重大计划事件。</td></tr>
+    <tr><td colspan="5">今日暂无重大计划事件。</td></tr>
     {% endfor %}
   </table>
 </div>
 
-<!-- Learn one thing -->
+<!-- 11. LEARN ONE THING -->
 {% if report.learn_one_thing %}
 <div class="section">
-  <div class="section-title">今日一个知识点</div>
+  <div class="section-title">今日一个知识点 · Learn One Thing Today</div>
   <div class="card">
     <div class="item-title">{{ report.learn_one_thing.title }}</div>
-    <p>{{ report.learn_one_thing.body }}</p>
+    <div class="label">今天的问题</div><p>{{ report.learn_one_thing.question }}</p>
+    <div class="label">核心概念</div><p>{{ report.learn_one_thing.core_concept }}</p>
+    <div class="label">今日例子</div><p>{{ report.learn_one_thing.todays_example }}</p>
+    {% if report.learn_one_thing.common_mistake %}<div class="label">常见新手误区</div><p>{{ report.learn_one_thing.common_mistake }}</p>{% endif %}
+    <div class="label">交易者启示</div><p>{{ report.learn_one_thing.trader_takeaway }}</p>
   </div>
 </div>
 {% endif %}
 
-<!-- Terminology -->
+<!-- 12. TERMINOLOGY -->
 {% if report.terminology %}
 <div class="section">
   <div class="section-title">术语解释</div>

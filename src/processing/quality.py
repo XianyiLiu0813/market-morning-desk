@@ -1,4 +1,4 @@
-"""Pre-send data quality gate (Section 34).
+"""Pre-send data quality gate (Section 34; V2 Part 2 - the P0 gate).
 
 Runs right before rendering/sending. If quality is below the minimum bar,
 the report is still generated but clearly labeled DATA QUALITY WARNING /
@@ -16,6 +16,33 @@ from src.models.schemas import (
     StoryAnalysis,
 )
 from src.utils.config import Settings
+
+
+def check_core_assets(snapshot: MarketSnapshot, settings: Settings) -> List[str]:
+    """Return the list of core-required symbols (Part 2) that are missing,
+    NaN/None, or stale in the validated snapshot. Called separately from
+    run_quality_checks so collectors/market.py can also surface this list
+    directly on the snapshot for downstream modules to see at a glance."""
+    core_symbols = settings.quality.get("core_required_assets", [])
+    by_symbol = {a.symbol: a for a in snapshot.assets}
+    missing: List[str] = []
+    for sym in core_symbols:
+        asset = by_symbol.get(sym)
+        if asset is None:
+            missing.append(sym)
+            continue
+        if asset.is_stale:
+            missing.append(sym)
+            continue
+        # A rate asset only needs a valid level; a normal asset needs a
+        # valid daily_pct. Pydantic already turned any NaN into None, so a
+        # plain None check here is sufficient - no isnan() needed twice.
+        if asset.is_rate:
+            if asset.last_price is None:
+                missing.append(sym)
+        elif asset.daily_pct is None and asset.last_price is None:
+            missing.append(sym)
+    return missing
 
 
 def run_quality_checks(
@@ -36,6 +63,16 @@ def run_quality_checks(
     stale = [a for a in snapshot.assets if a.is_stale]
     if len(stale) > len(snapshot.assets) / 2 and snapshot.assets:
         reasons.append("超过一半的行情资产数据已过期（stale）。")
+
+    core_missing = check_core_assets(snapshot, settings)
+    max_core_missing = settings.quality.get("max_core_assets_missing", 3)
+    if core_missing:
+        warnings.append(f"以下核心资产数据暂缺或已过期：{', '.join(core_missing)}。")
+    if len(core_missing) > max_core_missing:
+        reasons.append(
+            f"核心资产数据缺失过多（{len(core_missing)} / {max_core_missing} 上限）："
+            f"{', '.join(core_missing)}。"
+        )
 
     if settings.quality.get("require_source_url", True):
         missing_url = [c for c in clusters if not c.urls]
@@ -60,4 +97,5 @@ def run_quality_checks(
         warnings=warnings,
         degraded_mode=degraded,
         reasons=reasons,
+        core_assets_missing=core_missing,
     )

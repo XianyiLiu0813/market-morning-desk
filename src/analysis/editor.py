@@ -19,7 +19,10 @@ from src.analysis.llm_client import call_llm_json
 TASK = "editorial_synthesis"
 
 INSTRUCTIONS = """Synthesize INPUT_DATA (regime, top stories, theme views, trade ideas) into a \
-final editorial layer for a morning research note.
+final editorial layer for a morning research note. Each theme now carries an INDEPENDENT \
+structural_view (multi-quarter thesis) and tactical_view (days-to-weeks trade-worthiness) - when \
+you reference a theme, be precise about which one you mean (a structurally bullish theme can still \
+be tactically neutral this week).
 
 Return JSON:
 {
@@ -57,7 +60,13 @@ def synthesize_report(
             for s in top_stories[:7]
         ],
         "themes": [
-            {"name": t.theme_name, "view": t.view.value, "momentum": t.momentum.value}
+            {
+                "name": t.theme_name,
+                "structural_view": t.structural_view.value,
+                "tactical_view": t.tactical_view.value,
+                "momentum": t.momentum.value,
+                "risk": t.risk,
+            }
             for t in themes
         ],
         "trade_ideas": [

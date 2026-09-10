@@ -33,6 +33,10 @@ YAHOO_SYMBOL_MAP = {
     "^HSTECH": "HSTECH.HK",
 }
 
+# Rate-type assets must render as level + bp change, never a raw percent
+# (Part 4) - see MarketAsset.is_rate / MarketAsset.bp_change.
+RATE_SYMBOLS = {"US2Y", "US10Y", "US30Y", "US2S10S"}
+
 
 class YFinanceMarketDataProvider(MarketDataProvider):
     name = "yfinance"
@@ -60,6 +64,16 @@ class YFinanceMarketDataProvider(MarketDataProvider):
                 if t is None:
                     continue
                 hist = t.history(period="3mo", interval="1d")
+                # yfinance frequently appends a placeholder row for "today"
+                # before the session has actually printed a close (all-NaN
+                # OHLC), especially when polled outside US market hours.
+                # Drop any row with no Close so "last" is always the most
+                # recent row that actually has data - this was the root
+                # cause of assets rendering as "nan%" (P0 data-quality
+                # fix). The Pydantic-level NaN guard on MarketAsset is a
+                # second line of defense in case a provider misbehaves in
+                # some other way.
+                hist = hist.dropna(subset=["Close"])
                 if hist.empty:
                     continue
                 last = hist.iloc[-1]
@@ -85,7 +99,16 @@ class YFinanceMarketDataProvider(MarketDataProvider):
                 )
                 volume = float(last["Volume"]) if "Volume" in last else None
                 avg_volume = float(hist["Volume"].tail(20).mean()) if "Volume" in hist else None
-                rel_volume = (volume / avg_volume) if (volume and avg_volume) else None
+                # `nan` is truthy in Python, so `volume and avg_volume` alone
+                # would happily divide by a NaN average (common for
+                # yields/FX, which report zero/NaN volume on Yahoo) and
+                # silently produce a NaN relative_volume. Require both to be
+                # real, non-zero numbers.
+                rel_volume = (
+                    volume / avg_volume
+                    if (volume and avg_volume and avg_volume == avg_volume and volume == volume)
+                    else None
+                )
 
                 out.append(
                     MarketAsset(
@@ -104,6 +127,7 @@ class YFinanceMarketDataProvider(MarketDataProvider):
                         as_of=as_of,
                         data_source="yfinance",
                         is_stale=False,
+                        is_rate=original_sym in RATE_SYMBOLS,
                     )
                 )
             except Exception as exc:  # noqa: BLE001

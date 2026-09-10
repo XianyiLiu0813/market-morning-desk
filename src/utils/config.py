@@ -51,6 +51,7 @@ class Settings:
     terminology_terms: int = 5
     educational_mode: bool = True
     yesterday_review: bool = True
+    junior_analyst_mode: bool = True
     mock_mode: bool = True
     min_story_score: float = 1.5
     scoring_weights: Dict[str, float] = field(default_factory=dict)
@@ -129,6 +130,7 @@ def load_settings() -> Settings:
         terminology_terms=int(raw.get("terminology_terms", 5)),
         educational_mode=bool(raw.get("educational_mode", True)),
         yesterday_review=bool(raw.get("yesterday_review", True)),
+        junior_analyst_mode=bool(raw.get("junior_analyst_mode", True)),
         mock_mode=_env_bool("MOCK_MODE", bool(raw.get("mock_mode", True))),
         min_story_score=float(raw.get("min_story_score", 1.5)),
         scoring_weights=weights,

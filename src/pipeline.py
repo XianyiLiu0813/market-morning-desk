@@ -4,6 +4,12 @@ This module wires together collectors -> processing -> analysis ->
 rendering -> persistence -> email, matching the Section 3 pipeline stages
 and Section 47 acceptance criteria. `main.py` is a thin CLI wrapper around
 `run_morning_pipeline`.
+
+V2 additions wired in here: the Trader's Dashboard and What Changed
+Overnight are computed deterministically (not LLM calls) right after the
+validated snapshot and theme views are ready; story/company analysis now
+receive the snapshot so their price_check fields are grounded in real
+data; a Part-32 validation pass runs just before the report is persisted.
 """
 from __future__ import annotations
 
@@ -13,11 +19,13 @@ import tempfile
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 
+from src.analysis.change_detection import build_what_changed_overnight
 from src.analysis.company_analysis import analyze_companies
 from src.analysis.editor import synthesize_report
 from src.analysis.learning import generate_educational_content, record_concepts_taught
 from src.analysis.macro_analysis import split_macro_vs_market
 from src.analysis.market_regime import infer_market_regime
+from src.analysis.market_state import compute_trader_dashboard
 from src.analysis.story_analysis import analyze_stories
 from src.analysis.theme_analysis import analyze_themes
 from src.analysis.trade_analysis import generate_trade_ideas
@@ -45,6 +53,7 @@ from src.models.database import (
 from src.models.schemas import MorningReport, SourceRecord, SourceTier
 from src.processing.quality import run_quality_checks
 from src.processing.scoring import score_clusters
+from src.processing.validation_v2 import run_v2_validation
 from src.providers.factory import (
     build_email_provider,
     build_llm_provider,
@@ -84,7 +93,8 @@ def run_morning_pipeline(
     logger.info("=== Morning pipeline started (run_id=%s, run_date=%s, mock_mode=%s) ===",
                 run_id, run_date, settings.mock_mode)
 
-    # 1. Market data collection
+    # 1. Market data collection (P0 data-quality gate applied inside
+    # collect_market_snapshot / run_quality_checks - see Part 2).
     market_provider = build_market_provider(settings)
     providers_used["market"] = market_provider.name
     snapshot = collect_market_snapshot(market_provider, settings, run_date)
@@ -113,6 +123,10 @@ def run_morning_pipeline(
     macro_clusters, market_clusters = split_macro_vs_market(eligible_clusters)
     top_macro_clusters = macro_clusters[: settings.macro_stories]
     top_market_clusters = market_clusters[: settings.top_news]
+    # V2 Part 10: stories that cleared the eligibility bar but didn't make
+    # the Top Stories cut still get a one-line mention rather than being
+    # silently dropped - "Other Developments" (kept brief, titles only).
+    other_development_clusters = market_clusters[settings.top_news: settings.top_news + 5]
 
     # 5. LLM analysis
     llm = build_llm_provider(settings)
@@ -135,13 +149,15 @@ def run_morning_pipeline(
     theme_views = analyze_themes(llm, settings, snapshot, eligible_clusters)
     llm_calls += 1
 
-    macro_story_analyses = analyze_stories(llm, top_macro_clusters, theme_context)
+    macro_story_analyses = analyze_stories(llm, top_macro_clusters, theme_context, snapshot=snapshot)
     llm_calls += 1 if top_macro_clusters else 0
 
-    top_story_analyses = analyze_stories(llm, top_market_clusters, theme_context)
+    top_story_analyses = analyze_stories(llm, top_market_clusters, theme_context, snapshot=snapshot)
     llm_calls += 1 if top_market_clusters else 0
 
-    company_radar = analyze_companies(llm, eligible_clusters, settings, max_companies=settings.company_radar)
+    company_radar = analyze_companies(
+        llm, eligible_clusters, settings, max_companies=settings.company_radar, snapshot=snapshot,
+    )
     llm_calls += 1 if company_radar or eligible_clusters else 0
 
     trade_ideas = generate_trade_ideas(llm, theme_views, company_radar, max_ideas=settings.trade_ideas_max)
@@ -158,16 +174,31 @@ def run_morning_pipeline(
     synthesis = synthesize_report(llm, regime, top_story_analyses, theme_views, trade_ideas)
     llm_calls += 1
 
-    # 6. Yesterday review (optional, Section 22)
+    # 6. Trader's Dashboard + What Changed Overnight (V2 Part 5-6) - both
+    # deterministic, computed from the validated snapshot / persisted
+    # history, not LLM calls.
+    dashboard = compute_trader_dashboard(snapshot)
+    what_changed_overnight = build_what_changed_overnight(
+        run_date, theme_views, [l.value for l in regime.labels], regime.summary, dashboard, snapshot,
+    )
+
+    # 7. Yesterday review (optional, Section 22)
     yesterday_items = []
     if settings.yesterday_review:
         prior_ideas = get_prior_trade_ideas(run_date)
         yesterday_items = build_review(prior_ideas, assets_by_symbol)
 
-    # 7. Data quality gate (Section 34)
+    # 8. Data quality gate (Section 34) + V2 Part 32 validation pass. The
+    # validation pass can drop/downgrade individual items (e.g. a LOW-
+    # importance story that slipped into Top Stories, or a directional
+    # trade idea missing its invalidation condition) - it runs AFTER the
+    # quality gate reads the raw counts, but its own warnings are folded
+    # into the same DataQualityStatus the reader sees.
     quality = run_quality_checks(snapshot, eligible_clusters, top_story_analyses + macro_story_analyses, settings)
+    top_story_analyses, trade_ideas, v2_warnings = run_v2_validation(snapshot, top_story_analyses, trade_ideas)
+    quality.warnings.extend(v2_warnings)
 
-    # 8. Source index (per-source tier, tracked directly from the original
+    # 9. Source index (per-source tier, tracked directly from the original
     # articles - not approximated from the cluster's best tier).
     seen_sources: Dict[str, Dict[str, Any]] = {}
     for c in eligible_clusters:
@@ -184,12 +215,16 @@ def run_morning_pipeline(
         for sid, info in seen_sources.items()
     ]
 
-    # 9. Assemble final report
+    other_developments = [c.title for c in other_development_clusters]
+
+    # 10. Assemble final report
     report = MorningReport(
         run_date=run_date,
         generated_at=now_utc(),
         timezone=settings.timezone,
+        dashboard=dashboard,
         regime=regime,
+        what_changed_overnight=what_changed_overnight,
         three_things_that_matter=synthesis.three_things_that_matter,
         main_risk_today=synthesis.main_risk_today,
         one_sentence_summary=synthesis.one_sentence_summary,
@@ -199,6 +234,7 @@ def run_morning_pipeline(
         macro_stories=macro_story_analyses,
         theme_views=theme_views,
         top_stories=top_story_analyses,
+        other_developments=other_developments,
         company_radar=company_radar,
         trade_ideas=trade_ideas,
         learn_one_thing=educational.learn_one_thing if settings.educational_mode else None,
@@ -209,7 +245,7 @@ def run_morning_pipeline(
         source_index=source_index,
     )
 
-    # 10. Render HTML (+ compact PDF if that's the configured delivery format)
+    # 11. Render HTML (+ compact PDF if that's the configured delivery format)
     html = render_report(report)
 
     pdf_bytes: Optional[bytes] = None
@@ -233,7 +269,7 @@ def run_morning_pipeline(
             logger.error("PDF generation failed, falling back to HTML email: %s", exc)
             failures.append(f"pdf_generation_failed: {exc}")
 
-    # 11. Persist (upsert on run_date so re-running the same date - e.g. a
+    # 12. Persist (upsert on run_date so re-running the same date - e.g. a
     # manual re-run or a retried scheduled job - overwrites rather than
     # violating the unique run_date constraint).
     with get_session() as session:
@@ -323,17 +359,19 @@ def run_morning_pipeline(
         for t in theme_views:
             session.add(
                 ThemeDailyViewRow(
-                    run_date=run_date, theme_key=t.theme_key, view=t.view.value, momentum=t.momentum.value,
-                    kind=t.kind.value, evidence_json=dumps(t.evidence), risk=t.risk,
+                    run_date=run_date, theme_key=t.theme_key,
+                    structural_view=t.structural_view.value, tactical_view=t.tactical_view.value,
+                    momentum=t.momentum.value, evidence_json=dumps(t.evidence), risk=t.risk,
                     confidence_pct=t.confidence_pct,
                 )
             )
         for c in company_radar:
             session.add(
                 CompanyEventRow(
-                    run_date=run_date, ticker=c.ticker, company_name=c.company_name, headline=c.headline,
+                    run_date=run_date, ticker=c.ticker, company_name=c.company_name,
+                    signal=c.signal.value, what_changed=c.what_changed,
                     relevant_driver=c.relevant_driver.value if c.relevant_driver else None,
-                    explanation=c.explanation, confidence_pct=c.confidence_pct,
+                    driver_explanation=c.driver_explanation, confidence_pct=c.confidence_pct,
                 )
             )
         for e in macro_events:
@@ -352,7 +390,7 @@ def run_morning_pipeline(
                 )
             )
 
-    # 12. Email
+    # 13. Email
     email_status = "skipped"
     email_path = None
     if send_email:

@@ -60,7 +60,9 @@ def test_quality_check_passes_when_sources_present(settings):
     from src.models.schemas import ImportanceLevel, MarketSnapshot, StoryAnalysis
     from datetime import date, datetime, timezone as tz
 
-    snapshot = MarketSnapshot(run_date=date(2026, 9, 9), generated_at=datetime.now(tz=tz.utc), assets=[MarketAssetStub() for _ in range(5)])
+    snapshot = MarketSnapshot(
+        run_date=date(2026, 9, 9), generated_at=datetime.now(tz=tz.utc), assets=core_asset_stubs(),
+    )
     story_ok = StoryAnalysis(
         cluster_id="c1", title="t", importance=ImportanceLevel.HIGH, fact="f", why_it_matters="w", source_ids=["c1"],
     )
@@ -72,3 +74,20 @@ def MarketAssetStub():
     from src.models.schemas import MarketAsset
 
     return MarketAsset(symbol="X", display_name="X", group="g", daily_pct=0.1)
+
+
+def core_asset_stubs():
+    """A full set of the V2 core-required assets (see
+    config/settings.yaml quality.core_required_assets) so a test can
+    satisfy the P0 data-quality gate without triggering degraded_mode for
+    unrelated reasons."""
+    from src.models.schemas import MarketAsset
+
+    symbols = [
+        "SPY", "QQQ", "IWM", "SMH", "SOXX", "^VIX", "DXY",
+        "GC=F", "CL=F", "BTC-USD", "^HSI", "^HSTECH", "KWEB",
+    ]
+    out = [MarketAsset(symbol=s, display_name=s, group="g", daily_pct=0.1) for s in symbols]
+    out.append(MarketAsset(symbol="US2Y", display_name="US2Y", group="利率", last_price=3.7, previous_close=3.68, is_rate=True))
+    out.append(MarketAsset(symbol="US10Y", display_name="US10Y", group="利率", last_price=4.1, previous_close=4.05, is_rate=True))
+    return out

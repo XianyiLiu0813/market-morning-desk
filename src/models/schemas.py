@@ -5,6 +5,19 @@ must validate its JSON output against one of these models before it's
 allowed to flow into report rendering (Section 25/26 - hallucination
 guardrails). If validation fails, the caller must fall back to a safe
 degraded value, never invent one.
+
+V2 additions (see market-morning-desk V2 upgrade notes):
+- MarketAsset carries `is_rate` + a basis-point change helper so Treasury
+  yields display as level + bp, not a raw percent-of-percent.
+- ThemeView splits a single BULLISH/BEARISH label into independent
+  structural (multi-quarter) and tactical (days-to-weeks) views.
+- StoryAnalysis/CompanyAnalysis carry a deterministic, Python-computed
+  `price_check` - never LLM-invented - so "did the market actually trade
+  this" is always grounded in the validated snapshot.
+- TradeIdea carries `edge_or_mispricing` and `conditions_met` so a setup
+  must show its work, not just assert a direction.
+- LearnOneThing is now a structured 5-part lesson instead of a free-form
+  paragraph.
 """
 from __future__ import annotations
 
@@ -12,7 +25,7 @@ from datetime import datetime, date
 from enum import Enum
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 # --------------------------------------------------------------------------
@@ -43,6 +56,7 @@ class Momentum(str, Enum):
 class TradeDirection(str, Enum):
     LONG_WATCH = "LONG WATCH"
     SHORT_WATCH = "SHORT WATCH"
+    WAIT = "WAIT"
     AVOID = "AVOID"
     NO_TRADE = "NO TRADE"
 
@@ -61,12 +75,20 @@ class RegimeLabel(str, Enum):
     VOLATILITY_EVENT = "VOLATILITY_EVENT"
 
 
-class ThemeKind(str, Enum):
-    STRUCTURAL = "STRUCTURAL"
-    TACTICAL = "TACTICAL"
-
-
 class ImportanceLevel(str, Enum):
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
+
+
+class CompanySignal(str, Enum):
+    POSITIVE = "POSITIVE"
+    NEUTRAL = "NEUTRAL"
+    NEGATIVE = "NEGATIVE"
+    WATCH = "WATCH"
+
+
+class ConfidenceLevel(str, Enum):
     HIGH = "HIGH"
     MEDIUM = "MEDIUM"
     LOW = "LOW"
@@ -94,13 +116,57 @@ class MarketAsset(BaseModel):
     as_of: Optional[datetime] = None
     data_source: str = "unknown"
     is_stale: bool = False
+    # V2: rate-type assets (Treasury yields, 2s10s) must never be displayed
+    # as a plain percent change (Part 4) - `last_price`/`previous_close`
+    # for these are already yield levels in percentage-point units, so the
+    # basis-point delta is (last_price - previous_close) * 100.
+    is_rate: bool = False
+
+    @field_validator(
+        "daily_pct", "return_5d_pct", "return_1m_pct", "pct_from_52w_high",
+        "last_price", "previous_close", "overnight_pct", "volume", "relative_volume",
+    )
+    @classmethod
+    def reject_nan_inf(cls, v: Optional[float]) -> Optional[float]:
+        """A NaN/inf value must never reach the report as a number - it has
+        to become an explicit "data unavailable", not a `nan%` string
+        (Part 2 P0 data-quality gate). Coercing to None here means every
+        consumer (renderer, dashboard logic, price-check text) automatically
+        treats it as missing, rather than each call site needing its own
+        isnan() check."""
+        if v is None:
+            return None
+        import math
+
+        if math.isnan(v) or math.isinf(v):
+            return None
+        return v
+
+    @property
+    def bp_change(self) -> Optional[float]:
+        """Basis-point change for rate-type assets. None for non-rate
+        assets or when levels are unavailable."""
+        if not self.is_rate or self.previous_close is None or self.last_price is None:
+            return None
+        return round((self.last_price - self.previous_close) * 100, 1)
 
 
 class MarketSnapshot(BaseModel):
+    """The single validated market data object every analysis module reads
+    from (Part 3: ValidatedMarketSnapshot) - no module may independently
+    invent or re-fetch a price; if it's not in here, it's "data unavailable"."""
+
     run_date: date
     generated_at: datetime
     assets: List[MarketAsset] = Field(default_factory=list)
     warnings: List[str] = Field(default_factory=list)
+    core_assets_missing: List[str] = Field(default_factory=list)
+
+    def get(self, symbol: str) -> Optional[MarketAsset]:
+        for a in self.assets:
+            if a.symbol == symbol:
+                return a
+        return None
 
 
 # --------------------------------------------------------------------------
@@ -167,6 +233,10 @@ class NewsCluster(BaseModel):
     best_tier: int = 2
     fact_hint: Optional[str] = None
     hours_since_publish: Optional[float] = None
+    # V2 (Part 11 classification QA): set when theme/company auto-tagging
+    # had low confidence - such clusters are excluded from theme analysis
+    # rather than silently mis-filed (e.g. a PE deal landing under "Gold").
+    unclassified: bool = False
 
 
 # --------------------------------------------------------------------------
@@ -182,6 +252,10 @@ class MacroEvent(BaseModel):
     actual: Optional[str] = None
     importance: ImportanceLevel = ImportanceLevel.MEDIUM
     notes: Optional[str] = None
+    # V2 (Part 19): watch list + conditional scenario framing, e.g.
+    # "claims clearly above expected -> growth concern up -> yields may fall".
+    assets_to_watch: List[str] = Field(default_factory=list)
+    scenario: Optional[str] = None
 
 
 # --------------------------------------------------------------------------
@@ -198,21 +272,58 @@ class MarketRegimeView(BaseModel):
     source_ids: List[str] = Field(default_factory=list)
 
 
+class TraderDashboard(BaseModel):
+    """Part 5: deterministic, rule-based market-state read (not an LLM
+    call) - six one-word-ish states a junior trader should register in the
+    first 10 seconds of reading. Computed directly from the validated
+    snapshot in src/analysis/market_state.py, never invented."""
+
+    risk_appetite: str  # 改善 / 稳定 / 恶化
+    rates: str  # 下行 / 持平 / 上行
+    usd: str  # 走弱 / 持平 / 走强
+    volatility: str  # 下降 / 持平 / 上升
+    breadth: str  # 偏宽 / 分化 / 偏窄
+    liquidity: str  # 支持性 / 中性 / 收紧（heuristic proxy - see notes）
+    breadth_is_proxy: bool = True
+    liquidity_is_proxy: bool = True
+
+
 class ThemeView(BaseModel):
+    """V2 (Part 7): a theme's structural (multi-quarter) view and tactical
+    (days-to-weeks) view are tracked independently - a great long-term
+    theme can still be TACTICAL = NEUTRAL/WAIT this week."""
+
     theme_key: str
     theme_name: str
-    view: Sentiment
+    structural_view: Sentiment
+    tactical_view: Sentiment
     momentum: Momentum
-    kind: ThemeKind = ThemeKind.STRUCTURAL
+    structural_reason: str
+    tactical_reason: str
+    price_confirmation: str = "数据不足"  # Confirmed / Mixed / Weak / 数据不足
     evidence: List[str] = Field(default_factory=list)
     risk: Optional[str] = None
     change_vs_yesterday: Optional[str] = None
     confidence_pct: int = Field(ge=0, le=100, default=50)
     source_ids: List[str] = Field(default_factory=list)
 
+    @property
+    def is_meaningful_change(self) -> bool:
+        """Exception-based reporting (Part 8): a theme only earns an
+        expanded card if it genuinely changed vs yesterday (set by
+        analysis/change_detection.py) OR has a fresh matching news story
+        (source_ids non-empty) - NOT just because it has some price
+        evidence, which nearly every theme has on any given day and would
+        defeat the point of "don't waste the reader's attention"."""
+        if self.change_vs_yesterday:
+            return True
+        return len(self.source_ids) > 0
+
 
 class StoryAnalysis(BaseModel):
-    """Full structured story write-up (Section 15)."""
+    """Full structured story write-up (Section 15), extended for V2 with a
+    deterministic price_check and an explicit expectation framework
+    (Part 25: actual vs consensus vs priced-in vs price reaction)."""
 
     cluster_id: str
     title: str
@@ -221,6 +332,11 @@ class StoryAnalysis(BaseModel):
     fact: str
     why_it_matters: str
     market_impact: Optional[str] = None
+    # V2: filled in Python from the validated snapshot, never by the LLM -
+    # e.g. ["GOOGL -0.3%", "NVDA +0.5%", "SMH -0.6%"]. Empty list means no
+    # relevant ticker had price data, not "not computed".
+    price_check: List[str] = Field(default_factory=list)
+    expectation_impact: Optional[str] = None
     first_order_effect: Optional[str] = None
     second_order_effect: Optional[str] = None
     who_benefits: List[str] = Field(default_factory=list)
@@ -256,20 +372,37 @@ class EarningsDriver(str, Enum):
 
 
 class CompanyAnalysis(BaseModel):
+    """V2 (Part 12): Company Radar now tracks signal/what-changed/
+    expectation-impact/price-confirmation/next-watch instead of one
+    headline + one paragraph."""
+
     ticker: str
     company_name: str
-    headline: str
+    signal: CompanySignal = CompanySignal.NEUTRAL
+    what_changed: str
     relevant_driver: Optional[EarningsDriver] = None
-    explanation: str
+    driver_explanation: str
+    expectation_impact: Optional[str] = None
+    # V2: filled in Python from the validated snapshot, same discipline as
+    # StoryAnalysis.price_check.
+    price_check: List[str] = Field(default_factory=list)
+    what_to_watch_next: Optional[str] = None
     theme_keys: List[str] = Field(default_factory=list)
     confidence_pct: int = Field(ge=0, le=100, default=50)
     source_ids: List[str] = Field(default_factory=list)
 
 
 class TradeIdea(BaseModel):
+    """V2 (Part 14-17): a setup must show which evidence conditions it
+    satisfies and what the market may be mispricing - not just assert a
+    direction because a theme is bullish."""
+
     ticker: Optional[str] = None
     direction: TradeDirection
+    structural_view: Optional[str] = None
+    tactical_view: Optional[str] = None
     thesis: Optional[str] = None
+    edge_or_mispricing: Optional[str] = None
     catalyst: Optional[str] = None
     why_now: Optional[str] = None
     confirmation_required: Optional[str] = None
@@ -280,13 +413,13 @@ class TradeIdea(BaseModel):
     time_horizon: Optional[str] = None
     key_risks: List[str] = Field(default_factory=list)
     confidence_pct: int = Field(ge=0, le=100, default=30)
+    confidence_level: ConfidenceLevel = ConfidenceLevel.LOW
     why_not_to_trade: Optional[str] = None
+    junior_lesson: Optional[str] = None
+    # Part 32 CHECK 6/7/8: which of the 5 evidence conditions this setup
+    # satisfied (see src/analysis/trade_analysis.py::EVIDENCE_CONDITIONS).
+    conditions_met: List[str] = Field(default_factory=list)
     source_ids: List[str] = Field(default_factory=list)
-
-    @field_validator("direction")
-    @classmethod
-    def no_trade_needs_no_ticker_thesis(cls, v: TradeDirection) -> TradeDirection:
-        return v
 
 
 class TradeIdeaList(BaseModel):
@@ -310,23 +443,26 @@ class TerminologyTerm(BaseModel):
 
 
 class LearnOneThing(BaseModel):
+    """V2 (Part 20): a structured 5-part lesson instead of one free-form
+    paragraph - question / concept / today's example / common beginner
+    mistake / trader takeaway."""
+
     title: str
-    body: str
+    question: str
+    core_concept: str
+    todays_example: str
+    common_mistake: Optional[str] = None
+    trader_takeaway: str
     tied_to_event: Optional[str] = None
 
-    @field_validator("body")
-    @classmethod
-    def length_guard(cls, v: str) -> str:
-        # Word-splitting on whitespace only works for space-delimited scripts
-        # (English etc.) - CJK text (Chinese/Japanese/Korean) has no spaces
-        # between words, so len(v.split()) would wrongly flag a genuinely
-        # long Chinese paragraph as "too short". Use character count instead,
-        # which is language-agnostic; ~50 English words ≈ 250+ characters,
-        # and a substantive Chinese paragraph runs well past 150 characters.
-        char_count = len(v.strip())
-        if char_count < 150:
-            raise ValueError("Learn-one-thing body is too short to be useful (<150 characters)")
-        return v
+    @model_validator(mode="after")
+    def length_guard(self) -> "LearnOneThing":
+        # See MarketAsset/V1 note on why this counts characters, not
+        # whitespace-split "words" - CJK text has no spaces between words.
+        total = len(self.question) + len(self.core_concept) + len(self.todays_example) + len(self.trader_takeaway)
+        if total < 150:
+            raise ValueError("Learn-one-thing content is too short to be useful (<150 characters combined)")
+        return self
 
 
 class MentalModel(BaseModel):
@@ -359,6 +495,7 @@ class DataQualityStatus(BaseModel):
     warnings: List[str] = Field(default_factory=list)
     degraded_mode: bool = False
     reasons: List[str] = Field(default_factory=list)
+    core_assets_missing: List[str] = Field(default_factory=list)
 
 
 class MorningReport(BaseModel):
@@ -368,7 +505,9 @@ class MorningReport(BaseModel):
     generated_at: datetime
     timezone: str
 
+    dashboard: Optional[TraderDashboard] = None
     regime: MarketRegimeView
+    what_changed_overnight: List[str] = Field(default_factory=list)
     three_things_that_matter: List[str] = Field(default_factory=list)
     main_risk_today: Optional[str] = None
     one_sentence_summary: Optional[str] = None
@@ -381,6 +520,7 @@ class MorningReport(BaseModel):
 
     theme_views: List[ThemeView] = Field(default_factory=list)
     top_stories: List[StoryAnalysis] = Field(default_factory=list)
+    other_developments: List[str] = Field(default_factory=list)
     company_radar: List[CompanyAnalysis] = Field(default_factory=list)
     trade_ideas: List[TradeIdea] = Field(default_factory=list)
 

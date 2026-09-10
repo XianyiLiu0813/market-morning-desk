@@ -47,11 +47,39 @@ scoring_weights:
 # "What Actually Mattered Overnight" section.
 min_story_score: 1.5
 
-# --- Data quality gates (Section 34) ---
+# --- Data quality gates (Section 34; V2 Part 2 P0 gate) ---
 quality:
   max_market_data_age_minutes: 240   # beyond this, flag as stale
   require_min_market_assets: 5       # minimum distinct assets with data to proceed normally
   require_source_url: true           # stories missing a URL are down-weighted, not dropped silently
+  # Core assets a trader needs every morning without exception. If MORE
+  # THAN max_core_assets_missing of these are unavailable/stale/NaN, the
+  # report is marked DATA QUALITY WARNING / degraded mode rather than
+  # silently presenting a normal-looking report with holes in it.
+  core_required_assets:
+    - SPY
+    - QQQ
+    - IWM
+    - SMH
+    - SOXX
+    - "^VIX"
+    - US2Y
+    - US10Y
+    - DXY
+    - GC=F      # Gold
+    - CL=F      # WTI
+    - BTC-USD
+    - "^HSI"
+    - "^HSTECH"
+    - KWEB
+  max_core_assets_missing: 3
+
+# V2 Part 21: when true, the report explains professional terminology
+# inline as it comes up, distinguishes structural vs tactical views
+# explicitly, and includes the Learn One Thing / terminology / common-
+# mistake teaching sections. Turn off only if you want a terser,
+# no-teaching report aimed at someone who already knows the jargon.
+junior_analyst_mode: true
 
 # --- LLM provider selection (Section 25) ---
 llm:

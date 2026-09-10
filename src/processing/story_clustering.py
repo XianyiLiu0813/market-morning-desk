@@ -82,6 +82,13 @@ def cluster_articles(articles: List[NewsArticle]) -> List[NewsCluster]:
                 best_tier=min(a.tier.value for a in cluster),
                 fact_hint=fact_hint,
                 hours_since_publish=round(hours_since, 1),
+                # V2 Part 11 classification QA: keyword-based tagging that
+                # fires on 4+ unrelated themes for one cluster is a red flag
+                # (e.g. a story spuriously matching both "Gold" and
+                # "Software/SaaS" keywords) rather than genuinely
+                # multi-theme news. Excluded from theme/company analysis
+                # until reviewed, rather than silently mis-filed.
+                unclassified=len(themes) >= 4,
             )
         )
     return out
