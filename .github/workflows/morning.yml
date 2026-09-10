@@ -50,9 +50,20 @@ jobs:
         uses: actions/cache@v4
         with:
           path: data/market_morning_desk.db
-          key: morning-desk-db-${{ github.run_id }}
+          # The schema version suffix (v2) is deliberate: init_db() only
+          # CREATES missing tables (SQLAlchemy create_all), it never ALTERs
+          # an existing table's columns. If a cached DB from before a
+          # schema change (e.g. V2's theme_daily_views/company_events
+          # column renames) got restored, every insert against the new
+          # column names would crash with "no such column". Bump this
+          # suffix whenever src/models/database.py's table columns change,
+          # so a stale-schema cache is abandoned instead of reused. Losing
+          # one day's "yesterday" baseline when this happens is harmless -
+          # analysis/change_detection.py already treats a missing prior-day
+          # row as "no baseline available" rather than crashing.
+          key: morning-desk-db-v2-${{ github.run_id }}
           restore-keys: |
-            morning-desk-db-
+            morning-desk-db-v2-
 
       - name: Run morning pipeline
         env:
