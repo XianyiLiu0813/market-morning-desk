@@ -106,3 +106,32 @@ def test_not_degraded_when_few_core_assets_missing(settings):
     status = run_quality_checks(snapshot, [_dummy_cluster()], [], settings)
     assert status.degraded_mode is False
     assert "QQQ" in status.core_assets_missing
+
+
+def test_same_article_across_two_days_does_not_crash(tmp_db):
+    """Reproduces a real production crash: an RSS feed can still list the
+    same article (identical source_id/url/title, hence identical
+    deterministic article_id hash) across two consecutive daily runs -
+    e.g. published late in the prior day, still within the collection
+    window the next morning. The per-run cleanup in pipeline.py only
+    deletes THAT day's rows before re-inserting, so article_id must be
+    unique per (run_date, article_id), not globally unique, or the second
+    day's insert crashes the whole pipeline with an IntegrityError."""
+    from datetime import date
+
+    from src.models.database import NewsArticleRow, get_session
+
+    with get_session() as session:
+        session.add(NewsArticleRow(
+            article_id="dup123", run_date=date(2026, 9, 10), title="Same article",
+            source_id="nikkei", source_name="Nikkei Asia", tier=2,
+            tickers_json="[]", themes_json="[]",
+        ))
+
+    # Must not raise - this is the exact scenario that crashed production.
+    with get_session() as session:
+        session.add(NewsArticleRow(
+            article_id="dup123", run_date=date(2026, 9, 11), title="Same article",
+            source_id="nikkei", source_name="Nikkei Asia", tier=2,
+            tickers_json="[]", themes_json="[]",
+        ))

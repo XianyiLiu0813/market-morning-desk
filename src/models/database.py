@@ -21,6 +21,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     create_engine,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -53,9 +54,20 @@ class MarketSnapshotRow(Base):
 
 class NewsArticleRow(Base):
     __tablename__ = "news_articles"
+    # Uniqueness is scoped to (run_date, article_id), NOT a bare unique
+    # article_id: the same real-world article can legitimately still be
+    # listed in an RSS feed's most-recent-N-items window across two
+    # consecutive daily runs (e.g. published late yesterday, still present
+    # when today's run polls "since_hours" back), which reproduces the
+    # same deterministic article_id hash. The per-run_date cleanup in
+    # pipeline.py only deletes THIS run_date's rows before re-inserting, so
+    # a bare global-unique article_id would collide with yesterday's
+    # still-present row and crash the whole pipeline with an
+    # IntegrityError - this happened in production (see git history).
+    __table_args__ = (UniqueConstraint("run_date", "article_id", name="uq_news_articles_run_date_article_id"),)
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    article_id = Column(String, nullable=False, unique=True, index=True)
+    article_id = Column(String, nullable=False, index=True)
     run_date = Column(Date, nullable=False, index=True)
     title = Column(Text, nullable=False)
     summary = Column(Text, nullable=True)

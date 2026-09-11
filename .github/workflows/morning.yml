@@ -61,9 +61,9 @@ jobs:
           # one day's "yesterday" baseline when this happens is harmless -
           # analysis/change_detection.py already treats a missing prior-day
           # row as "no baseline available" rather than crashing.
-          key: morning-desk-db-v2-${{ github.run_id }}
+          key: morning-desk-db-v3-${{ github.run_id }}
           restore-keys: |
-            morning-desk-db-v2-
+            morning-desk-db-v3-
 
       - name: Run morning pipeline
         env:
