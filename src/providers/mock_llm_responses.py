@@ -709,3 +709,203 @@ _HANDLERS = {
     "educational_content": _educational_content,
     "editorial_synthesis": _editorial_synthesis,
 }
+
+
+# --------------------------------------------------------------------------
+# finance_lesson / weekly_finance_review (Finance Learning Lab module)
+#
+# Hand-authored flagship content for the first few curriculum topics
+# (tvm, fs_overview, expected_return) so the module demonstrates full
+# depth immediately in MOCK_MODE. Any other topic falls back to
+# _generic_finance_lesson(), which builds a serviceable (if less rich)
+# lesson from the topic's own curriculum metadata (name/category/
+# cfa_connection/beyond_cfa_note/where_used) - once a real LLM provider is
+# configured, every topic gets genuine full-depth content via the
+# analysis/finance_learning.py::INSTRUCTIONS prompt instead.
+# --------------------------------------------------------------------------
+
+FINANCE_LESSON_LIBRARY: Dict[str, Dict[str, Any]] = {
+    "tvm": {
+        "one_liner": "今天的一块钱，通常比明天的一块钱更值钱——这就是货币时间价值（Time Value of Money）的全部直觉。",
+        "core_concept": (
+            "为什么「今天的钱」更值钱？三个原因：第一，机会成本——今天拿到的钱可以立刻拿去投资、生息；第二，通胀——"
+            "同样一块钱，未来能买到的东西通常更少；第三，不确定性——未来能不能真的拿到这笔钱，总有一点风险。这三者"
+            "加在一起，就是金融里常说的折现率（discount rate）：把未来的钱「打折」换算成今天的价值。"
+            "反过来，也可以把今天的钱「滚利」换算成未来的价值（future value）。这一套换算逻辑，是几乎所有金融"
+            "估值——从债券定价到公司估值（DCF）——最底层的数学基础。"
+        ),
+        "worked_example": (
+            "假设年利率是 5%。今天的 100 元，一年后会变成 100 × (1+5%) = 105 元（这是 future value，终值）。"
+            "反过来算：一年后的 100 元，换算成今天的价值是多少？100 ÷ (1+5%) ≈ 95.24 元（这是 present value，现值）。"
+            "利率越高，或者时间越长，这个「折扣」就越大——比如同样是一年后的100元，如果利率是10%而不是5%，"
+            "今天只值 90.91 元，比刚才更「便宜」。"
+        ),
+        "why_investors_care": (
+            "几乎所有的金融估值工具都建立在 TVM 之上：债券定价，本质上是把未来每一期的利息和本金折算成今天的价值再"
+            "加总；股票的 DCF 估值，是把公司未来很多年的自由现金流折算成今天的价值；退休规划、房贷计算，同样是"
+            "TVM 的应用。理解 TVM，才能理解「为什么利率变化会影响几乎所有资产的价格」。"
+        ),
+        "market_connection": None,
+        "common_mistake": "常见误区：以为「折现率」只是一个技术性的数学参数。实际上，折现率的选择（比如用多高的利率）本身就包含了对风险、通胀预期的判断，选错折现率，整个估值结论都会跟着错。",
+        "key_takeaways": [
+            "今天的钱 > 未来同样金额的钱，核心原因是机会成本、通胀与不确定性",
+            "折现（discounting）和终值计算（compounding）是一套换算逻辑的两个方向",
+            "利率越高或时间越长，未来现金流折算到今天的价值就越「打折」",
+        ],
+        "quiz": [
+            {"question": "年利率为 5% 时，今天的 100 元一年后值多少钱？", "answer": "100 × 1.05 = 105 元。"},
+            {"question": "年利率为 10% 时，一年后的 100 元，相当于今天的多少钱？", "answer": "100 ÷ 1.10 ≈ 90.91 元，比利率5%时折算出的95.24元更「便宜」，因为折现率更高。"},
+            {"question": "为什么公司股票估值（DCF）对折现率的假设特别敏感？", "answer": "因为股票的现金流通常延续很多年甚至永续，时间越长，折现率的一点点变化，经过多年复利放大后，对现值的影响就越大。"},
+        ],
+    },
+    "fs_overview": {
+        "one_liner": "利润表告诉你公司这段时间赚不赚钱，资产负债表告诉你公司这一刻家底多厚，现金流量表告诉你钱是不是真的进了口袋。",
+        "core_concept": (
+            "三张报表回答三个不同的问题。利润表（Income Statement）回答「这一段时间（比如一个季度）公司卖了多少"
+            "钱、花了多少成本、最后剩下多少利润」——是一个「流量」概念。资产负债表（Balance Sheet）回答「在某一个"
+            "时间点，公司有多少家当（资产）、欠了多少债（负债）、股东真正拥有多少（股东权益）」——是一个「存量」概念。"
+            "现金流量表（Cash Flow Statement）回答「这段时间，公司账上真实的现金到底是多了还是少了，钱从哪里来、"
+            "去了哪里」——这是三张表里最难「美化」的一张，因为现金要么在账上，要么不在。"
+        ),
+        "worked_example": (
+            "一家公司这个季度利润表显示净利润 1000 万元，看起来很赚钱。但如果这 1000 万里有大部分是「应收账款」——"
+            "也就是客户还没付钱、只是记在账上的销售——那现金流量表里「经营活动现金流」可能远低于1000万，甚至是负数。"
+            "这时候单看利润表会误判公司的真实健康状况，这也是为什么专业投资者常说「利润是观点，现金是事实」"
+            "（Profit is an opinion, cash is a fact）。"
+        ),
+        "why_investors_care": (
+            "投资者需要把三张表放在一起看，而不是只看利润表的「好看数字」。收入增长如果伴随应收账款、库存的异常"
+            "膨胀，可能意味着盈利质量（quality of earnings）有问题；资产负债表能看出公司的杠杆水平和偿债能力；"
+            "现金流量表则是判断公司是否会「看起来赚钱、实际上快没现金了」的关键工具。"
+        ),
+        "market_connection": None,
+        "common_mistake": "常见误区：只看利润表的净利润数字就下结论「这家公司很赚钱」。真正专业的分析，需要同时确认这笔利润有没有对应的真实现金流入。",
+        "key_takeaways": [
+            "利润表 = 流量（一段时间的经营成果），资产负债表 = 存量（某一时刻的家底）",
+            "现金流量表最难被「美化」，是验证利润真实性的关键工具",
+            "「利润是观点，现金是事实」——三张表要一起看，不能只看一张",
+        ],
+        "quiz": [
+            {"question": "利润表和资产负债表分别回答什么问题？", "answer": "利润表回答「这段时间赚了多少」（流量），资产负债表回答「此刻有多少家当、欠多少债」（存量）。"},
+            {"question": "如果一家公司净利润很高，但经营活动现金流是负的，可能说明什么？", "answer": "可能这笔「利润」大量以应收账款等非现金形式存在，尚未真正收到现金，需要进一步核实盈利质量。"},
+            {"question": "为什么说现金流量表最难被美化？", "answer": "因为现金是最直接可验证的——账上有没有这笔钱是客观事实，不像利润表里的收入确认、折旧计提等会计处理存在一定的判断空间。"},
+        ],
+    },
+    "expected_return": {
+        "one_liner": "期望收益不是「你会得到的收益」，而是「把所有可能结果按发生概率加权平均」后的理论数字。",
+        "core_concept": (
+            "投资的结果通常是不确定的：可能涨、可能跌、涨跌幅度也不一样。期望收益（Expected Return）就是把每一种"
+            "可能的结果，乘以它发生的概率，再加总起来，得到一个「概率加权平均」的收益数字。它回答的是「平均而言，"
+            "这笔投资大概能带来多少回报」，而不是「这笔投资一定会带来多少回报」——单次投资的实际结果，完全可能"
+            "偏离期望收益很远。"
+        ),
+        "worked_example": (
+            "假设某只股票：50% 的概率上涨 10%，50% 的概率下跌 4%。期望收益 = 0.5 × 10% + 0.5 × (-4%) = 5% - 2% = 3%。"
+            "注意：这不代表这只股票「会涨3%」——真实结果要么是+10%，要么是-4%，3%只是概率加权后的理论平均值，"
+            "是用来比较不同投资机会、或者做组合规划时的一个基准数字。"
+        ),
+        "why_investors_care": (
+            "期望收益是几乎所有资产配置、组合优化模型的起点——CAPM、投资组合理论，都是建立在「期望收益」和"
+            "「风险（波动率）」这两个核心变量之上的。专业投资者在比较两个投资机会时，不会只看历史收益率，而会"
+            "结合对未来不同情景的概率判断，重新估计期望收益。"
+        ),
+        "market_connection": None,
+        "common_mistake": "常见误区：把「期望收益」当成「预测值」，以为算出3%就是「这笔投资会赚3%」。期望收益是概率加权的平均值，单次结果几乎总是偏离这个数字。",
+        "key_takeaways": [
+            "期望收益 = Σ（概率 × 该情景下的收益率），是概率加权平均，不是预测",
+            "期望收益是 CAPM、组合优化等主流投资理论的起点变量之一",
+            "比较投资机会时要同时看期望收益和风险（波动率），而不是只看收益",
+        ],
+        "quiz": [
+            {"question": "某资产 60% 概率涨 8%，40% 概率跌 5%，期望收益是多少？", "answer": "0.6×8% + 0.4×(-5%) = 4.8% - 2% = 2.8%。"},
+            {"question": "期望收益是3%，是否意味着这笔投资今年一定能赚3%？", "answer": "不是。期望收益是概率加权的理论平均值，实际结果可能是任何一种设定情景下的具体数值，很可能不是3%。"},
+            {"question": "为什么专业投资者在比较两个投资机会时，不能只看期望收益？", "answer": "因为还要看风险（波动率）——两个期望收益相同的资产，风险可能天差地别，风险调整后的吸引力完全不同，这也是后续 Sharpe Ratio 等概念要解决的问题。"},
+        ],
+    },
+}
+
+
+def _generic_finance_lesson(topic: Dict[str, Any]) -> Dict[str, Any]:
+    """Fallback for any curriculum topic without hand-authored content
+    (see module docstring above) - built from the topic's own metadata so
+    it's always on-topic and schema-valid, even if less rich than a real
+    LLM-generated or hand-authored lesson."""
+    name_en = topic.get("name_en", topic.get("id", "this concept"))
+    name_zh = topic.get("name_zh", name_en)
+    category = (topic.get("category") or "").replace("_", " ")
+    where_used = topic.get("where_used", [])
+    beyond_note = topic.get("beyond_cfa_note")
+
+    return {
+        "one_liner": f"{name_zh}（{name_en}）是{category}领域的一个核心概念，专业投资者会在实际工作中反复用到它。",
+        "core_concept": (
+            f"{name_zh}（{name_en}）属于{category}范畴。理解它的关键是先搞清楚它想解决什么问题，再看它具体"
+            f"如何被计算和使用——建议在学习本节内容后，进一步查阅一手教材或请教这一领域的从业者，加深对"
+            f"{name_en}在实际工作场景中细节的理解。"
+        ),
+        "worked_example": (
+            f"由于当前使用的是模拟分析引擎（MOCK_MODE），{name_en} 的具体数值化例子暂未生成——接入真实 AI 分析"
+            "后（Anthropic/OpenAI），这里会给出一个具体的数字或真实场景例子。"
+        ),
+        "why_investors_care": (
+            f"{name_en} 常见的实际应用场景包括：{', '.join(where_used) if where_used else '多个金融细分领域'}。"
+            "理解这类工具性概念，是从「知道术语」走向「能在实际分析中使用它」的关键一步。"
+        ),
+        "market_connection": None,
+        "common_mistake": None,
+        "key_takeaways": [
+            f"{name_zh}（{name_en}）属于{category}，是需要掌握的核心概念之一",
+            f"实际应用场景包括：{', '.join(where_used[:3]) if where_used else '相关金融岗位'}",
+        ] + ([beyond_note[:40] + "…"] if beyond_note else []),
+        "quiz": [
+            {"question": f"{name_en} 属于金融的哪个细分领域？", "answer": category or "见课程配置"},
+            {"question": f"{name_en} 常见的实际应用场景有哪些？", "answer": "、".join(where_used) if where_used else "需结合具体工作场景理解"},
+            {"question": f"学习 {name_en} 时，应该先理解什么，再学习具体计算方法？", "answer": "先理解这个概念想解决什么实际问题（直觉），再学公式和计算方法，最后看专业人士如何在实际工作中使用它。"},
+        ],
+    }
+
+
+def _finance_lesson(data: Dict[str, Any]) -> Dict[str, Any]:
+    topic = data.get("topic", {})
+    topic_id = topic.get("id")
+    lesson = FINANCE_LESSON_LIBRARY.get(topic_id)
+    if lesson is None:
+        lesson = _generic_finance_lesson(topic)
+    else:
+        lesson = dict(lesson)  # shallow copy so market_connection injection below doesn't mutate the library
+
+    # Only attach a market connection if there's a genuine link available
+    # in today's context - never forced (matches the real-LLM instruction).
+    market_ctx = data.get("today_market_context") or {}
+    regime_labels = market_ctx.get("regime_labels", [])
+    if topic_id == "tvm" and "RATE_DRIVEN" in regime_labels:
+        lesson["market_connection"] = (
+            "今天的市场状态被标记为 RATE_DRIVEN（利率驱动）——这正是货币时间价值最直接的市场体现：利率变化，"
+            "本质上就是折现率变化，会立刻影响几乎所有资产（尤其是长久期资产）的估值。"
+        )
+
+    return lesson
+
+
+def _weekly_finance_review(data: Dict[str, Any]) -> Dict[str, Any]:
+    topics = data.get("topics_covered", [])
+    names = [t.get("name", "") for t in topics if t.get("name")]
+    chain = names if names else ["本周暂无已完成的主题"]
+    summary = (
+        ("本周学习的几个概念是层层递进的关系：" + " → ".join(chain) + "。"
+         "建议按这个顺序在脑海里过一遍每个概念如何自然引出下一个，而不是把它们当成孤立的定义死记硬背。")
+        if names else "本周暂无完整覆盖的主题，可等待下一周的学习内容再进行复习。"
+    )
+    quiz = [
+        {"question": f"「{name}」这个概念主要解决什么问题？", "answer": "见对应课程内容。"}
+        for name in names[:5]
+    ]
+    return {
+        "knowledge_chain": chain,
+        "connections_summary": summary,
+        "quiz": quiz,
+    }
+
+
+_HANDLERS["finance_lesson"] = _finance_lesson
+_HANDLERS["weekly_finance_review"] = _weekly_finance_review

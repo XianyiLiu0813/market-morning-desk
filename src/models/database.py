@@ -209,6 +209,35 @@ class LearningConceptRow(Base):
     user_level = Column(String, default="beginner")  # beginner|intermediate|advanced
 
 
+class FinanceLearningProgressRow(Base):
+    """Finance Learning Lab (new module) - tracks curriculum progress per
+    topic_id (defined in config/finance_curriculum.yaml), independent of
+    the general learning_concepts table used by the market report's
+    'Learn One Thing Today' section. One row per topic_id (upserted, not
+    per-run), since this is a long-running curriculum-progress record, not
+    a per-day audit log."""
+
+    __tablename__ = "finance_learning_progress"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    topic_id = Column(String, nullable=False, unique=True, index=True)
+    topic_name = Column(String, nullable=False)
+    category = Column(String, nullable=True)
+    track = Column(String, nullable=False)  # CFA_FOUNDATION | BEYOND_CFA
+    difficulty = Column(String, default="foundation")
+    first_taught = Column(Date, nullable=True)
+    last_taught = Column(Date, nullable=True)
+    times_reviewed = Column(Integer, default=0)
+    mastery_score = Column(Integer, default=0)  # simple 0-100 heuristic, see finance_learning.py
+    next_review_date = Column(Date, nullable=True)
+    completed = Column(Boolean, default=False)
+    related_topics_json = Column(Text, default="[]")
+    # The lesson's one_liner, captured at teach-time, so a later spaced-
+    # repetition recap (Part 9's "30-second review") has real content to
+    # show rather than a placeholder pointing at nothing.
+    review_summary = Column(Text, nullable=True)
+
+
 class SystemRunRow(Base):
     __tablename__ = "system_runs"
 

@@ -41,6 +41,7 @@ class Settings:
     watchlist_raw: Dict[str, Any]
     assets_raw: Dict[str, Any]
     sources_raw: Dict[str, Any]
+    finance_curriculum_raw: Dict[str, Any] = field(default_factory=dict)
 
     timezone: str = "Asia/Singapore"
     email_time: str = "07:45"
@@ -83,6 +84,18 @@ class Settings:
     def source_tiers(self) -> Dict[int, Any]:
         return self.sources_raw.get("tiers", {})
 
+    @property
+    def finance_learning_config(self) -> Dict[str, Any]:
+        return self.finance_curriculum_raw.get("finance_learning", {})
+
+    @property
+    def finance_topics(self) -> List[Dict[str, Any]]:
+        return self.finance_curriculum_raw.get("topics", [])
+
+    @property
+    def finance_category_rotation(self) -> Dict[str, Any]:
+        return self.finance_curriculum_raw.get("category_rotation", {})
+
     def validate(self) -> List[str]:
         """Return a list of human-readable warnings (non-fatal issues)."""
         warnings: List[str] = []
@@ -106,6 +119,7 @@ def load_settings() -> Settings:
     watchlist_raw = _load_yaml("watchlist.yaml")
     assets_raw = _load_yaml("assets.yaml")
     sources_raw = _load_yaml("sources.yaml")
+    finance_curriculum_raw = _load_yaml("finance_curriculum.yaml")
 
     sched = raw.get("email_time", "07:45")
     weights = raw.get("scoring_weights", {}) or {}
@@ -121,6 +135,7 @@ def load_settings() -> Settings:
         watchlist_raw=watchlist_raw,
         assets_raw=assets_raw,
         sources_raw=sources_raw,
+        finance_curriculum_raw=finance_curriculum_raw,
         timezone=raw.get("timezone", "Asia/Singapore"),
         email_time=sched,
         top_news=int(raw.get("top_news", 5)),

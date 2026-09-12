@@ -498,6 +498,74 @@ class DataQualityStatus(BaseModel):
     core_assets_missing: List[str] = Field(default_factory=list)
 
 
+# --------------------------------------------------------------------------
+# Finance Learning Lab (new module - CFA foundation + beyond-CFA tracks,
+# appended to the report; does not modify any of the market-analysis
+# schemas above).
+# --------------------------------------------------------------------------
+
+class FinanceTrack(str, Enum):
+    CFA_FOUNDATION = "CFA_FOUNDATION"
+    BEYOND_CFA = "BEYOND_CFA"
+
+
+class FinanceDifficulty(str, Enum):
+    FOUNDATION = "foundation"
+    INTERMEDIATE = "intermediate"
+    ADVANCED = "advanced"
+
+
+class QuizQuestion(BaseModel):
+    question: str
+    answer: str
+
+
+class FinanceLesson(BaseModel):
+    """One day's Finance Learning Lab entry (~1 page). Fields map directly
+    to the required section structure: one-liner -> core concept -> worked
+    example -> why investors care -> market connection -> common mistake
+    -> takeaways -> quiz -> CFA/beyond-CFA/career links."""
+
+    topic_id: str
+    topic_name: str
+    track: FinanceTrack
+    difficulty: FinanceDifficulty
+    progress_label: Optional[str] = None  # e.g. "Foundation · 6/38 已学完"
+    review_recap: Optional[str] = None  # Part 9: "30秒复习" of a due-for-review prior topic
+    one_liner: str
+    core_concept: str
+    worked_example: str
+    why_investors_care: str
+    market_connection: Optional[str] = None
+    common_mistake: Optional[str] = None
+    key_takeaways: List[str] = Field(default_factory=list)
+    quiz: List[QuizQuestion] = Field(default_factory=list)
+    cfa_connection: List[str] = Field(default_factory=list)
+    beyond_cfa_note: Optional[str] = None
+    where_used: List[str] = Field(default_factory=list)
+
+    @field_validator("key_takeaways")
+    @classmethod
+    def max_three_takeaways(cls, v: List[str]) -> List[str]:
+        return v[:3]
+
+    @field_validator("quiz")
+    @classmethod
+    def exactly_up_to_three_questions(cls, v: List[QuizQuestion]) -> List[QuizQuestion]:
+        return v[:3]
+
+
+class WeeklyFinanceReview(BaseModel):
+    """Sunday's Finance Learning Lab entry: a connections-map review of the
+    week's topics instead of a new one (Part 18)."""
+
+    week_label: str
+    topics_covered: List[str] = Field(default_factory=list)
+    knowledge_chain: List[str] = Field(default_factory=list)  # e.g. ["Expected Return", "Variance", ...]
+    connections_summary: str
+    quiz: List[QuizQuestion] = Field(default_factory=list)
+
+
 class MorningReport(BaseModel):
     """Top-level object handed to the HTML renderer."""
 
@@ -532,6 +600,12 @@ class MorningReport(BaseModel):
 
     data_quality: DataQualityStatus = Field(default_factory=DataQualityStatus)
     source_index: List[SourceRecord] = Field(default_factory=list)
+
+    # Finance Learning Lab (new module): exactly one of these two is set
+    # on a given day (weekly_finance_review on the configured review day,
+    # finance_lesson otherwise) - both None if finance_learning is disabled.
+    finance_lesson: Optional[FinanceLesson] = None
+    weekly_finance_review: Optional[WeeklyFinanceReview] = None
 
     disclaimer: str = (
         "本报告是一个 AI 辅助的市场研究与学习工具，不构成投资建议（not financial advice）。"

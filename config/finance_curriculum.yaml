@@ -1,0 +1,464 @@
+# Finance Learning Lab curriculum (new module, appended to the existing
+# morning report - does not touch/replace the market analysis modules).
+#
+# Two tracks:
+#   cfa_foundation - concepts broadly aligned with CFA-style curriculum
+#                    areas (taught independently - no copyrighted CFA
+#                    questions/text are reproduced).
+#   beyond_cfa     - real-world professional-investor topics: quant,
+#                    hedge funds, market microstructure, credit, private
+#                    markets, trading psychology, etc.
+#
+# `prerequisites` are topic ids that should be taught first - the
+# selection logic (src/analysis/finance_learning.py) will not jump ahead
+# of an incomplete prerequisite. `rotation_day` is a soft hint (Mon-Sun)
+# used to bias which category is preferred that day (Part 17's weekly
+# rotation) - it never blocks selection if no matching topic is ready.
+
+finance_learning:
+  enabled: true
+  user_level: foundation          # foundation | intermediate | advanced
+  cfa_weight: 0.60
+  beyond_cfa_weight: 0.40
+  weekly_review: true             # Sunday = review instead of a new topic
+  daily_quiz: true
+  spaced_repetition: true
+  review_intervals_days: [3, 7, 30]   # Part 9: 30-second review schedule
+
+# rotation_day values: mon,tue,wed,thu,fri,sat,sun (Part 17)
+category_rotation:
+  mon: [cfa_core, financial_statement_analysis, corporate_issuers]
+  tue: [equity_investments, financial_statement_analysis]
+  wed: [quant_methods, quant_finance]
+  thu: [economics, fixed_income, macro_trading]
+  fri: [derivatives, market_microstructure]
+  sat: [alternative_investments, hedge_funds]
+  sun: [review]
+
+topics:
+  # ---------------- WEEK 1 ----------------
+  - id: tvm
+    name_en: "Time Value of Money"
+    name_zh: "货币时间价值"
+    category: quant_methods
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Quantitative Methods"]
+    beyond_cfa_note: null
+    where_used: ["Equity Research", "Fixed Income", "Corporate Finance", "投资银行"]
+
+  - id: fs_overview
+    name_en: "Financial Statements: The Big Picture"
+    name_zh: "三张报表全局观"
+    category: financial_statement_analysis
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Financial Statement Analysis"]
+    beyond_cfa_note: null
+    where_used: ["Equity Research", "Credit Analysis", "投资银行"]
+
+  - id: expected_return
+    name_en: "Expected Return"
+    name_zh: "期望收益"
+    category: quant_methods
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [tvm]
+    cfa_connection: ["Quantitative Methods", "Portfolio Management"]
+    beyond_cfa_note: "专业投资者会把 expected return 拆解成 alpha + beta，见后续 Factor Model 主题。"
+    where_used: ["Asset Management", "Quant Fund"]
+
+  - id: rates_yields
+    name_en: "Interest Rates & Bond Yields"
+    name_zh: "利率与债券收益率"
+    category: fixed_income
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Fixed Income", "Economics"]
+    beyond_cfa_note: null
+    where_used: ["Fixed Income Research", "Macro Trading", "央行/固定收益"]
+
+  - id: options_basics
+    name_en: "Call and Put Options"
+    name_zh: "看涨期权与看跌期权"
+    category: derivatives
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Derivatives"]
+    beyond_cfa_note: null
+    where_used: ["Options Trading", "Market Making", "对冲基金"]
+
+  - id: hedge_funds_intro
+    name_en: "What Do Hedge Funds Actually Do?"
+    name_zh: "对冲基金到底在做什么"
+    category: hedge_funds
+    track: beyond_cfa
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Alternative Investments"]
+    beyond_cfa_note: "CFA 只会简单提及对冲基金分类；真实市场里 long/short、market neutral、global macro 等策略差异很大，是求职和理解市场资金行为的关键。"
+    where_used: ["Hedge Fund", "Prime Brokerage", "Asset Allocation"]
+
+  - id: week1_review
+    name_en: "Week 1 Review"
+    name_zh: "第一周复习"
+    category: review
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [tvm, fs_overview, expected_return, rates_yields, options_basics, hedge_funds_intro]
+    cfa_connection: []
+    beyond_cfa_note: null
+    where_used: []
+    is_review: true
+
+  # ---------------- WEEK 2 ----------------
+  - id: npv
+    name_en: "Net Present Value (NPV)"
+    name_zh: "净现值"
+    category: quant_methods
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [tvm]
+    cfa_connection: ["Corporate Issuers", "Quantitative Methods"]
+    beyond_cfa_note: null
+    where_used: ["Corporate Finance", "Private Equity", "投资银行"]
+
+  - id: eps_earnings
+    name_en: "EPS and Earnings"
+    name_zh: "每股收益与盈利"
+    category: financial_statement_analysis
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [fs_overview]
+    cfa_connection: ["Financial Statement Analysis", "Equity Investments"]
+    beyond_cfa_note: null
+    where_used: ["Equity Research", "Asset Management"]
+
+  - id: variance_std
+    name_en: "Variance & Standard Deviation"
+    name_zh: "方差与标准差"
+    category: quant_methods
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [expected_return]
+    cfa_connection: ["Quantitative Methods"]
+    beyond_cfa_note: null
+    where_used: ["Risk Management", "Quant Fund"]
+
+  - id: yield_curve
+    name_en: "The Yield Curve"
+    name_zh: "收益率曲线"
+    category: fixed_income
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [rates_yields]
+    cfa_connection: ["Fixed Income", "Economics"]
+    beyond_cfa_note: "宏观交易员会盯着 2s10s、5s30s 这些曲线利差来押注经济周期，而不只是看单一期限的收益率。"
+    where_used: ["Macro Trading", "Fixed Income Research", "央行"]
+
+  - id: option_value
+    name_en: "Option Intrinsic Value vs Time Value"
+    name_zh: "期权的内在价值与时间价值"
+    category: derivatives
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [options_basics]
+    cfa_connection: ["Derivatives"]
+    beyond_cfa_note: null
+    where_used: ["Options Trading", "Market Making"]
+
+  - id: pe_vc_public
+    name_en: "PE / VC / Public Markets: What's the Difference?"
+    name_zh: "私募股权、风险投资与公开市场的区别"
+    category: alternative_investments
+    track: beyond_cfa
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Alternative Investments"]
+    beyond_cfa_note: "GP/LP 结构、carry、管理费这些私募市场的运作机制，CFA 只讲皮毛，但是一级市场求职和理解资金流非常关键。"
+    where_used: ["Private Equity", "Venture Capital", "Growth Equity"]
+
+  - id: week2_review
+    name_en: "Week 2 Review"
+    name_zh: "第二周复习"
+    category: review
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [npv, eps_earnings, variance_std, yield_curve, option_value, pe_vc_public]
+    cfa_connection: []
+    beyond_cfa_note: null
+    where_used: []
+    is_review: true
+
+  # ---------------- WEEK 3 ----------------
+  - id: irr
+    name_en: "Internal Rate of Return (IRR)"
+    name_zh: "内部收益率"
+    category: quant_methods
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [npv]
+    cfa_connection: ["Corporate Issuers"]
+    beyond_cfa_note: "私募股权和风险投资几乎只用 IRR（配合 MOIC）衡量业绩，而不是像二级市场一样看年化收益率。"
+    where_used: ["Private Equity", "Corporate Finance"]
+
+  - id: margins
+    name_en: "Gross Margin / Operating Margin"
+    name_zh: "毛利率与营业利润率"
+    category: financial_statement_analysis
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [eps_earnings]
+    cfa_connection: ["Financial Statement Analysis"]
+    beyond_cfa_note: null
+    where_used: ["Equity Research", "Credit Analysis"]
+
+  - id: covariance_correlation
+    name_en: "Covariance & Correlation"
+    name_zh: "协方差与相关系数"
+    category: quant_methods
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [variance_std]
+    cfa_connection: ["Quantitative Methods", "Portfolio Management"]
+    beyond_cfa_note: null
+    where_used: ["Portfolio Management", "Quant Fund", "Risk Management"]
+
+  - id: duration
+    name_en: "Duration"
+    name_zh: "久期"
+    category: fixed_income
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [yield_curve]
+    cfa_connection: ["Fixed Income"]
+    beyond_cfa_note: "\"long-duration equities\" 这个说法把久期这个固定收益概念借用到成长股估值上——利率上升为什么压制高估值科技股，本质就是久期逻辑。"
+    where_used: ["Fixed Income Research", "Macro Trading", "Portfolio Management"]
+
+  - id: delta
+    name_en: "Delta"
+    name_zh: "Delta（期权对标的价格的敏感度）"
+    category: derivatives
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [option_value]
+    cfa_connection: ["Derivatives"]
+    beyond_cfa_note: null
+    where_used: ["Options Trading", "Market Making"]
+
+  - id: long_short_equity
+    name_en: "Long/Short Equity"
+    name_zh: "多空股票策略"
+    category: hedge_funds
+    track: beyond_cfa
+    difficulty: foundation
+    prerequisites: [hedge_funds_intro]
+    cfa_connection: ["Alternative Investments"]
+    beyond_cfa_note: "gross exposure、net exposure、leverage 这些概念是理解对冲基金真实风险敞口的核心语言，CFA 教材很少深入。"
+    where_used: ["Hedge Fund", "Asset Management"]
+
+  - id: week3_review
+    name_en: "Week 3 Review"
+    name_zh: "第三周复习"
+    category: review
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [irr, margins, covariance_correlation, duration, delta, long_short_equity]
+    cfa_connection: []
+    beyond_cfa_note: null
+    where_used: []
+    is_review: true
+
+  # ---------------- WEEK 4 ----------------
+  - id: wacc
+    name_en: "WACC (Weighted Average Cost of Capital)"
+    name_zh: "加权平均资本成本"
+    category: corporate_issuers
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [npv]
+    cfa_connection: ["Corporate Issuers", "Equity Investments"]
+    beyond_cfa_note: null
+    where_used: ["Equity Research", "投资银行", "Corporate Finance"]
+
+  - id: fcf
+    name_en: "Free Cash Flow"
+    name_zh: "自由现金流"
+    category: financial_statement_analysis
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [margins]
+    cfa_connection: ["Financial Statement Analysis", "Equity Investments"]
+    beyond_cfa_note: null
+    where_used: ["Equity Research", "Private Equity", "Credit Analysis"]
+
+  - id: diversification
+    name_en: "Diversification"
+    name_zh: "分散化"
+    category: portfolio_management
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [covariance_correlation]
+    cfa_connection: ["Portfolio Management"]
+    beyond_cfa_note: null
+    where_used: ["Asset Management", "Portfolio Management"]
+
+  - id: real_yield
+    name_en: "Real Yield"
+    name_zh: "实际收益率"
+    category: macro_trading
+    track: beyond_cfa
+    difficulty: foundation
+    prerequisites: [yield_curve]
+    cfa_connection: ["Economics", "Fixed Income"]
+    beyond_cfa_note: "宏观交易员判断黄金、美元走势时，看的通常是实际收益率（名义收益率 - 通胀预期），而不是名义利率本身。"
+    where_used: ["Macro Trading", "Commodities"]
+
+  - id: greeks_overview
+    name_en: "Gamma / Theta / Vega Overview"
+    name_zh: "Gamma / Theta / Vega 速览"
+    category: derivatives
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [delta]
+    cfa_connection: ["Derivatives"]
+    beyond_cfa_note: "做市商和期权交易员的日常工作核心就是管理这几个 Greeks 的组合敞口，而不是只看 Delta。"
+    where_used: ["Options Trading", "Market Making"]
+
+  - id: market_making
+    name_en: "Market Making"
+    name_zh: "做市"
+    category: market_microstructure
+    track: beyond_cfa
+    difficulty: foundation
+    prerequisites: [options_basics]
+    cfa_connection: []
+    beyond_cfa_note: "做市商如何靠买卖价差（bid-ask spread）和库存管理赚钱，是理解市场流动性和真实交易成本的基础，CFA 教材几乎不涉及。"
+    where_used: ["Market Making", "Prop Trading", "Broker Dealer"]
+
+  - id: month1_review
+    name_en: "Month 1 Review"
+    name_zh: "第一个月复习"
+    category: review
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [wacc, fcf, diversification, real_yield, greeks_overview, market_making]
+    cfa_connection: []
+    beyond_cfa_note: null
+    where_used: []
+    is_review: true
+
+  # ---------------- FUTURE (intermediate/advanced, unlocked progressively) ----------------
+  - id: beta
+    name_en: "Beta"
+    name_zh: "贝塔"
+    category: quant_methods
+    track: cfa_foundation
+    difficulty: intermediate
+    prerequisites: [covariance_correlation, diversification]
+    cfa_connection: ["Portfolio Management"]
+    beyond_cfa_note: "专业投资者会把 beta 进一步拆解成 market/size/value/momentum/quality 等因子暴露，见后续 Factor Model 主题。"
+    where_used: ["Portfolio Management", "Quant Fund"]
+
+  - id: capm
+    name_en: "CAPM"
+    name_zh: "资本资产定价模型"
+    category: portfolio_management
+    track: cfa_foundation
+    difficulty: intermediate
+    prerequisites: [beta]
+    cfa_connection: ["Portfolio Management"]
+    beyond_cfa_note: null
+    where_used: ["Asset Management", "Equity Research"]
+
+  - id: dcf
+    name_en: "DCF Valuation"
+    name_zh: "现金流折现估值"
+    category: equity_investments
+    track: cfa_foundation
+    difficulty: intermediate
+    prerequisites: [wacc, fcf]
+    cfa_connection: ["Equity Investments"]
+    beyond_cfa_note: null
+    where_used: ["Equity Research", "投资银行", "Private Equity"]
+
+  - id: roic
+    name_en: "ROIC"
+    name_zh: "投入资本回报率"
+    category: equity_investments
+    track: cfa_foundation
+    difficulty: intermediate
+    prerequisites: [fcf]
+    cfa_connection: ["Equity Investments"]
+    beyond_cfa_note: null
+    where_used: ["Equity Research"]
+
+  - id: factor_investing
+    name_en: "Factor Investing"
+    name_zh: "因子投资"
+    category: quant_finance
+    track: beyond_cfa
+    difficulty: intermediate
+    prerequisites: [beta]
+    cfa_connection: ["Portfolio Management"]
+    beyond_cfa_note: "Fama-French 三因子/五因子模型，是量化基金和绝大多数机构组合归因的行业标准语言。"
+    where_used: ["Quant Fund", "Asset Management", "Risk Management"]
+
+  - id: sharpe_ratio
+    name_en: "Sharpe Ratio"
+    name_zh: "夏普比率"
+    category: portfolio_management
+    track: cfa_foundation
+    difficulty: intermediate
+    prerequisites: [expected_return, variance_std]
+    cfa_connection: ["Portfolio Management"]
+    beyond_cfa_note: null
+    where_used: ["Asset Management", "Hedge Fund"]
+
+  - id: bid_ask_liquidity
+    name_en: "Bid-Ask Spread & Liquidity"
+    name_zh: "买卖价差与流动性"
+    category: market_microstructure
+    track: beyond_cfa
+    difficulty: intermediate
+    prerequisites: [market_making]
+    cfa_connection: []
+    beyond_cfa_note: "流动性差的时候，滑点（slippage）和冲击成本会显著侵蚀策略的实际收益，这是从纸面回测到真实交易最容易被忽略的一步。"
+    where_used: ["Trading Desk", "Quant Fund"]
+
+  - id: credit_spread
+    name_en: "Credit Spread"
+    name_zh: "信用利差"
+    category: credit
+    track: beyond_cfa
+    difficulty: intermediate
+    prerequisites: [rates_yields]
+    cfa_connection: ["Fixed Income"]
+    beyond_cfa_note: null
+    where_used: ["Credit Research", "Fixed Income", "Macro Trading"]
+
+  - id: momentum_factor
+    name_en: "Momentum Factor"
+    name_zh: "动量因子"
+    category: quant_finance
+    track: beyond_cfa
+    difficulty: intermediate
+    prerequisites: [factor_investing]
+    cfa_connection: []
+    beyond_cfa_note: "动量是学术界和业界都验证过的最持久的因子之一，但也最容易在拥挤（crowded）时突然大幅回撤。"
+    where_used: ["Quant Fund", "CTA"]
+
+  - id: var_cvar
+    name_en: "VaR & CVaR"
+    name_zh: "风险价值与条件风险价值"
+    category: risk_management
+    track: beyond_cfa
+    difficulty: advanced
+    prerequisites: [variance_std, sharpe_ratio]
+    cfa_connection: ["Portfolio Management"]
+    beyond_cfa_note: null
+    where_used: ["Risk Management", "Hedge Fund", "Bank Trading Desk"]

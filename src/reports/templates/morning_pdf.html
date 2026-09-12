@@ -343,6 +343,107 @@
 </div>
 {% endif %}
 
+<!-- FINANCE LEARNING LAB (new module, appended - separate from the market report above) -->
+{% if report.finance_lesson or report.weekly_finance_review %}
+<div class="page-break"></div>
+<div class="section">
+  <div class="section-title">今日金融学习 · Finance Learning Lab</div>
+  <div class="sub" style="margin-bottom:5px;">从 CFA 基础到真实市场</div>
+
+  {% if report.weekly_finance_review %}
+  {% set r = report.weekly_finance_review %}
+  <div class="card">
+    <div class="item-title">{{ r.week_label }}</div>
+    <div class="label">本周知识链</div>
+    <p>{{ r.knowledge_chain | join(' → ') }}</p>
+    <div class="label">知识点之间的联系</div>
+    <p>{{ r.connections_summary }}</p>
+  </div>
+  {% if r.quiz %}
+  <div class="card">
+    <div class="label">本周小测（5题）</div>
+    <ol class="tight" style="padding-left:14px;">
+      {% for q in r.quiz %}<li>{{ q.question }}</li>{% endfor %}
+    </ol>
+    <div class="label" style="margin-top:5px;">答案</div>
+    <ol class="tight" style="padding-left:14px;color:#6b7280;font-size:7.4pt;">
+      {% for q in r.quiz %}<li>{{ q.answer }}</li>{% endfor %}
+    </ol>
+  </div>
+  {% endif %}
+
+  {% elif report.finance_lesson %}
+  {% set l = report.finance_lesson %}
+  <div class="card">
+    <div class="item-title">
+      {{ l.topic_name }}（{{ l.topic_id }}）
+      <span class="badge {{ 'badge-bullish' if l.track.value == 'CFA_FOUNDATION' else 'badge-neutral' }}">
+        {{ 'TRACK A · CFA FOUNDATION' if l.track.value == 'CFA_FOUNDATION' else 'TRACK B · BEYOND CFA' }}
+      </span>
+      <span class="badge badge-neutral">{{ l.difficulty.value | upper }}</span>
+    </div>
+    {% if l.progress_label %}<p style="color:#6b7280;font-size:7.2pt;">{{ l.progress_label }}</p>{% endif %}
+    {% if l.review_recap %}<div class="risk-box" style="background:#eef4fb;border-color:#c9dcf0;color:#2c5a86;">{{ l.review_recap }}</div>{% endif %}
+
+    <div class="label">一句话先讲明白</div>
+    <p><strong>{{ l.one_liner }}</strong></p>
+
+    <div class="label">核心概念</div>
+    <p>{{ l.core_concept }}</p>
+
+    <div class="label">一个简单例子</div>
+    <p>{{ l.worked_example }}</p>
+
+    <div class="label">为什么投资者关心？</div>
+    <p>{{ l.why_investors_care }}</p>
+
+    {% if l.market_connection %}
+    <div class="label">和真实市场有什么关系？</div>
+    <p>{{ l.market_connection }}</p>
+    {% endif %}
+
+    {% if l.common_mistake %}
+    <div class="risk-box"><strong>Junior Analyst 常见误区：</strong> {{ l.common_mistake }}</div>
+    {% endif %}
+  </div>
+
+  {% if l.key_takeaways %}
+  <div class="card">
+    <div class="label">你应该记住的几件事</div>
+    <ol class="tight" style="padding-left:14px;">
+      {% for t in l.key_takeaways %}<li>{{ t }}</li>{% endfor %}
+    </ol>
+  </div>
+  {% endif %}
+
+  {% if l.quiz %}
+  <div class="card">
+    <div class="label">自测题</div>
+    <ol class="tight" style="padding-left:14px;">
+      {% for q in l.quiz %}<li>{{ q.question }}</li>{% endfor %}
+    </ol>
+    <div class="label" style="margin-top:5px;">答案</div>
+    <ol class="tight" style="padding-left:14px;color:#6b7280;font-size:7.4pt;">
+      {% for q in l.quiz %}<li>{{ q.answer }}</li>{% endfor %}
+    </ol>
+  </div>
+  {% endif %}
+
+  <div class="grid3">
+    {% if l.cfa_connection %}
+    <div><div class="label">CFA Connection</div><p style="font-size:7.4pt;">{{ l.cfa_connection | join(', ') }}</p></div>
+    {% endif %}
+    {% if l.beyond_cfa_note %}
+    <div><div class="label">Beyond CFA</div><p style="font-size:7.4pt;">{{ l.beyond_cfa_note }}</p></div>
+    {% endif %}
+    {% if l.where_used %}
+    <div><div class="label">Where It's Used</div><p style="font-size:7.4pt;">{{ l.where_used | join(', ') }}</p></div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
 <div class="footer">
   {{ report.disclaimer }}
 </div>
