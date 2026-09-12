@@ -84,9 +84,16 @@ class NewsArticleRow(Base):
 
 class NewsClusterRow(Base):
     __tablename__ = "news_clusters"
+    # Same reasoning as NewsArticleRow above: cluster_id is derived from the
+    # representative article's id, which can recur across two consecutive
+    # daily runs (an RSS feed still listing yesterday's article this
+    # morning) - uniqueness must be scoped to (run_date, cluster_id), not
+    # global, or the second day's insert crashes with an IntegrityError
+    # exactly like the news_articles bug did.
+    __table_args__ = (UniqueConstraint("run_date", "cluster_id", name="uq_news_clusters_run_date_cluster_id"),)
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    cluster_id = Column(String, nullable=False, unique=True, index=True)
+    cluster_id = Column(String, nullable=False, index=True)
     run_date = Column(Date, nullable=False, index=True)
     title = Column(Text, nullable=False)
     member_article_ids_json = Column(Text, default="[]")

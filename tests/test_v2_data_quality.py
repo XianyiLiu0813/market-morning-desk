@@ -135,3 +135,19 @@ def test_same_article_across_two_days_does_not_crash(tmp_db):
             source_id="nikkei", source_name="Nikkei Asia", tier=2,
             tickers_json="[]", themes_json="[]",
         ))
+
+
+def test_same_cluster_across_two_days_does_not_crash(tmp_db):
+    """Same root cause as test_same_article_across_two_days_does_not_crash,
+    one table over: cluster_id is derived from the representative
+    article's id, so the same cross-day RSS overlap reproduces here too.
+    Confirmed against a real production crash log."""
+    from datetime import date
+
+    from src.models.database import NewsClusterRow, get_session
+
+    with get_session() as session:
+        session.add(NewsClusterRow(cluster_id="cl_dup", run_date=date(2026, 9, 11), title="Same cluster"))
+
+    with get_session() as session:
+        session.add(NewsClusterRow(cluster_id="cl_dup", run_date=date(2026, 9, 12), title="Same cluster"))
