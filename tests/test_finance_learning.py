@@ -110,3 +110,42 @@ def test_disabled_module_returns_none(settings, tmp_db):
     lesson = generate_finance_lesson(llm, settings, date(2026, 9, 1))
     assert lesson is None
     settings.finance_curriculum_raw["finance_learning"]["enabled"] = True  # restore for other tests
+
+
+def test_lesson_survives_llm_failure_with_fallback_content(settings, tmp_db):
+    """Regression test for the actual reported bug: on a day the real LLM
+    provider fails (rate limit, outage, invalid JSON), generate_finance_lesson
+    must still return a present (degraded) lesson, not None - otherwise the
+    section silently disappears exactly on unreliable-LLM days ("有的时候有
+    有的时候没有")."""
+    from src.providers.llm_base import LLMProvider
+
+    class BrokenLLM(LLMProvider):
+        name = "broken"
+
+        def generate_json(self, *a, **kw):
+            raise RuntimeError("simulated outage")
+
+    lesson = generate_finance_lesson(BrokenLLM(), settings, date(2026, 9, 1))
+    assert lesson is not None
+    assert lesson.topic_id == "tvm"
+    assert lesson.one_liner  # non-empty fallback content, not a blank/None field
+
+
+def test_weekly_review_survives_llm_failure_with_fallback_content(settings, tmp_db):
+    from src.providers.llm_base import LLMProvider
+
+    class BrokenLLM(LLMProvider):
+        name = "broken"
+
+        def generate_json(self, *a, **kw):
+            raise RuntimeError("simulated outage")
+
+    run_date = date(2026, 9, 1)
+    for topic in settings.finance_topics[:6]:
+        record_topic_taught(settings, run_date, topic)
+        run_date += timedelta(days=1)
+
+    review = generate_weekly_review(BrokenLLM(), settings, run_date)
+    assert review is not None
+    assert len(review.topics_covered) == 6

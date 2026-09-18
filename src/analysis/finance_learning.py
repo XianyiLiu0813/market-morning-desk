@@ -258,7 +258,15 @@ def generate_finance_lesson(
     }
     result = call_llm_json(llm, TASK, INSTRUCTIONS, input_data, _FinanceLessonBody, max_tokens=2048)
     if result is None:
-        return None
+        # Safe degraded fallback (Section 26 hallucination guardrail
+        # philosophy, same pattern as market_regime.py/editor.py): a real
+        # LLM outage/rate-limit/invalid-JSON day must not silently drop
+        # this section from the report - it should still appear, just
+        # with template content instead of AI-generated depth, exactly
+        # like every other module degrades. Without this, the section
+        # would vanish precisely on the days the LLM provider is unreliable
+        # (this was the actual bug - "有的时候有有的时候没有").
+        result = _fallback_finance_lesson_body(topic)
 
     lesson = FinanceLesson(
         topic_id=topic["id"],
@@ -300,7 +308,16 @@ def generate_weekly_review(llm: LLMProvider, settings: Settings, run_date: date)
     input_data = {"topics_covered": covered}
     result = call_llm_json(llm, WEEKLY_REVIEW_TASK, WEEKLY_REVIEW_INSTRUCTIONS, input_data, _WeeklyReviewBody, max_tokens=1536)
     if result is None:
-        return None
+        # Same degraded-fallback reasoning as generate_finance_lesson().
+        names = [c["name"] for c in covered]
+        result = _WeeklyReviewBody(
+            knowledge_chain=names,
+            connections_summary=(
+                ("本周学习的概念："+ " → ".join(names) + "。（编辑综合引擎本次不可用，此处为模板生成的简要小结，"
+                 "非完整的 AI 复盘。）") if names else "本周暂无完整覆盖的主题。"
+            ),
+            quiz=[{"question": f"「{name}」这个概念主要解决什么问题？", "answer": "见对应课程内容。"} for name in names[:5]],
+        )
 
     review = WeeklyFinanceReview(
         week_label=topic["name_zh"],
@@ -311,6 +328,37 @@ def generate_weekly_review(llm: LLMProvider, settings: Settings, run_date: date)
     )
     record_topic_taught(settings, run_date, topic)
     return review
+
+
+def _fallback_finance_lesson_body(topic: Dict[str, Any]) -> "_FinanceLessonBody":
+    """Safe degraded content for a day the real LLM call fails - built
+    entirely from curriculum metadata (config/finance_curriculum.yaml),
+    same discipline as the MOCK_MODE generic fallback in
+    providers/mock_llm_responses.py::_generic_finance_lesson, but kept as
+    a separate implementation here so the production degraded-path never
+    imports mock-only code."""
+    name_en = topic.get("name_en", topic.get("id", "this concept"))
+    name_zh = topic.get("name_zh", name_en)
+    category = (topic.get("category") or "").replace("_", " ")
+    where_used = topic.get("where_used", [])
+
+    return _FinanceLessonBody(
+        one_liner=f"{name_zh}（{name_en}）是{category}领域的一个核心概念。",
+        core_concept=(
+            f"（AI 分析引擎本次运行不可用，以下为模板生成的简要内容，非完整深度讲解。）"
+            f"{name_zh}（{name_en}）属于{category}范畴，建议之后查阅一手教材或请教相关从业者加深理解。"
+        ),
+        worked_example="AI 分析引擎本次不可用，暂无法生成具体数值例子。",
+        why_investors_care=(
+            f"{name_en} 常见的实际应用场景包括：{', '.join(where_used) if where_used else '多个金融细分领域'}。"
+        ),
+        market_connection=None,
+        common_mistake=None,
+        key_takeaways=[f"{name_zh}（{name_en}）属于{category}，是需要掌握的核心概念之一"],
+        quiz=[
+            {"question": f"{name_en} 属于金融的哪个细分领域？", "answer": category or "见课程配置"},
+        ],
+    )
 
 
 # Internal wrapper schemas (call_llm_json needs one Pydantic model per

@@ -80,6 +80,33 @@ class YFinanceMarketDataProvider(MarketDataProvider):
                 prev = hist.iloc[-2] if len(hist) > 1 else last
                 last_price = float(last["Close"])
                 previous_close = float(prev["Close"])
+
+                # Correctness fix: `history()`'s daily bar for the most
+                # recently completed session is NOT guaranteed to be frozen
+                # at the 4pm ET regular close - if queried while US
+                # after-hours trading is still active (4pm-8pm ET, which is
+                # 4am-8am / 5am-9am SGT depending on daylight saving - this
+                # window overlaps when the scheduled morning run fires), it
+                # can still reflect a drifting post-market print instead
+                # (verified empirically: history() Close matched
+                # postMarketPrice, not regularMarketPrice, during the
+                # after-hours window). Yahoo's quote endpoint separates
+                # these explicitly - regularMarketPrice stays pinned to the
+                # actual closing print regardless of ongoing after-hours
+                # activity - so prefer it when available. Never let this
+                # correction step itself break an otherwise-good row: any
+                # failure here just falls back to the history()-based
+                # values above, silently.
+                try:
+                    info = t.info
+                    regular_price = info.get("regularMarketPrice")
+                    regular_prev_close = info.get("regularMarketPreviousClose")
+                    if regular_price is not None and regular_prev_close is not None:
+                        last_price = float(regular_price)
+                        previous_close = float(regular_prev_close)
+                except Exception as info_exc:  # noqa: BLE001
+                    logger.debug("regularMarketPrice lookup failed for %s, using history()-based close: %s", original_sym, info_exc)
+
                 daily_pct = (
                     (last_price - previous_close) / previous_close * 100
                     if previous_close
