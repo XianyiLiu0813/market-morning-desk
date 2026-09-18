@@ -127,16 +127,65 @@ def select_next_topic(settings: Settings, run_date: date) -> Optional[Dict[str, 
     config is kept in the YAML as documentation for a future, more
     sophisticated scheduler (e.g. once the curriculum has genuinely
     parallel branches at the same prerequisite depth), but selection today
-    is deliberately just "next in line"."""
+    is deliberately just "next in line" WITHIN a track.
+
+    Exam prep mode (finance_learning.exam_date set, today on or before it):
+    among the ready topics, prefer CFA_FOUNDATION-track ones (still in
+    curriculum order) so the syllabus gets fully covered with buffer time
+    before the exam - BEYOND_CFA topics are deferred, not dropped: once
+    the exam date passes (or exam_date is cleared), selection reverts to
+    plain sequential order and picks up any deferred ones normally."""
     completed = _completed_topic_ids()
     topics = settings.finance_topics
 
-    for t in topics:
-        if t["id"] in completed:
-            continue
-        if all(p in completed for p in t.get("prerequisites", [])):
-            return t
-    return None
+    ready = [
+        t for t in topics
+        if t["id"] not in completed and all(p in completed for p in t.get("prerequisites", []))
+    ]
+    if not ready:
+        return None
+
+    if _exam_prep_active(settings, run_date):
+        cfa_ready = [t for t in ready if t.get("track") == "cfa_foundation"]
+        if cfa_ready:
+            return cfa_ready[0]
+
+    return ready[0]
+
+
+def _exam_prep_active(settings: Settings, run_date: date) -> bool:
+    exam_date_str = settings.finance_learning_config.get("exam_date")
+    if not exam_date_str:
+        return False
+    try:
+        exam_date = date.fromisoformat(str(exam_date_str))
+    except ValueError:
+        return False
+    return run_date <= exam_date
+
+
+def _exam_countdown_label(settings: Settings, run_date: date) -> Optional[str]:
+    days = days_until_exam(settings, run_date)
+    if days is None:
+        return None
+    exam_name = settings.finance_learning_config.get("exam_name", "考试")
+    if days == 0:
+        return f"距离 {exam_name} 就是今天！"
+    return f"距离 {exam_name} 还有 {days} 天"
+
+
+def days_until_exam(settings: Settings, run_date: date) -> Optional[int]:
+    """Used for the report's countdown display - returns None if no
+    exam_date is configured or it has already passed."""
+    exam_date_str = settings.finance_learning_config.get("exam_date")
+    if not exam_date_str:
+        return None
+    try:
+        exam_date = date.fromisoformat(str(exam_date_str))
+    except ValueError:
+        return None
+    delta = (exam_date - run_date).days
+    return delta if delta >= 0 else None
 
 
 def due_for_review(settings: Settings, run_date: date) -> Optional[FinanceLearningProgressRow]:
@@ -274,6 +323,7 @@ def generate_finance_lesson(
         track=topic["track"].upper(),
         difficulty=topic.get("difficulty", "foundation"),
         progress_label=progress_label(settings),
+        exam_countdown=_exam_countdown_label(settings, run_date),
         review_recap=(_build_review_recap(review_row) if review_row else None),
         one_liner=result.one_liner,
         core_concept=result.core_concept,
@@ -325,6 +375,7 @@ def generate_weekly_review(llm: LLMProvider, settings: Settings, run_date: date)
         knowledge_chain=result.knowledge_chain,
         connections_summary=result.connections_summary,
         quiz=result.quiz,
+        exam_countdown=_exam_countdown_label(settings, run_date),
     )
     record_topic_taught(settings, run_date, topic)
     return review

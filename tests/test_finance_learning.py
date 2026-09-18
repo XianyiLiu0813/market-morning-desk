@@ -39,9 +39,10 @@ def test_topic_with_unmet_prerequisites_is_skipped(settings, tmp_db):
     assert topic["id"] == "fs_overview"
 
 
-def test_sequential_progression_across_several_days(settings, tmp_db):
-    """Teach topics one at a time across consecutive days and confirm the
-    curriculum advances strictly in order (Part 26's fixed Week 1 sequence)."""
+def test_sequential_progression_across_several_days_no_exam_mode(settings, tmp_db):
+    """With exam prep mode off, topics (both tracks) advance strictly in
+    curriculum-file order (Part 26's fixed Week 1 sequence)."""
+    settings.finance_curriculum_raw["finance_learning"]["exam_date"] = None
     expected_order = ["tvm", "fs_overview", "expected_return", "rates_yields", "options_basics", "hedge_funds_intro"]
     current_date = date(2026, 9, 1)
     for expected_id in expected_order:
@@ -54,6 +55,41 @@ def test_sequential_progression_across_several_days(settings, tmp_db):
     topic = select_next_topic(settings, current_date)
     assert topic["id"] == "week1_review"
     assert topic.get("is_review") is True
+
+
+def test_exam_prep_mode_defers_beyond_cfa_topics(settings, tmp_db):
+    """With an active exam_date, a ready BEYOND_CFA topic (hedge_funds_intro)
+    must be deferred in favor of the next ready CFA_FOUNDATION topic (npv),
+    even though hedge_funds_intro comes earlier in file order - full-syllabus
+    coverage before the exam takes priority over BEYOND_CFA breadth."""
+    settings.finance_curriculum_raw["finance_learning"]["exam_date"] = "2027-02-22"
+    current_date = date(2026, 9, 1)
+    for topic_id in ["tvm", "fs_overview", "expected_return", "rates_yields", "options_basics"]:
+        topic = select_next_topic(settings, current_date)
+        assert topic["id"] == topic_id
+        record_topic_taught(settings, current_date, topic)
+        current_date += timedelta(days=1)
+
+    # hedge_funds_intro (beyond_cfa) is now ready (no prereqs) but must be
+    # skipped in favor of npv (cfa_foundation, prereq tvm already done).
+    topic = select_next_topic(settings, current_date)
+    assert topic["id"] == "npv"
+    assert topic["id"] != "hedge_funds_intro"
+
+
+def test_exam_countdown_reflects_configured_date(settings, tmp_db):
+    from src.analysis.finance_learning import days_until_exam
+
+    settings.finance_curriculum_raw["finance_learning"]["exam_date"] = "2027-02-22"
+    days = days_until_exam(settings, date(2026, 9, 18))
+    assert days == 157
+
+
+def test_exam_countdown_none_when_not_configured(settings, tmp_db):
+    from src.analysis.finance_learning import days_until_exam
+
+    settings.finance_curriculum_raw["finance_learning"]["exam_date"] = None
+    assert days_until_exam(settings, date(2026, 9, 18)) is None
 
 
 def test_spaced_repetition_schedules_a_future_review(settings, tmp_db):

@@ -349,6 +349,10 @@
 <div class="section">
   <div class="section-title">今日金融学习 · Finance Learning Lab</div>
   <div class="sub" style="margin-bottom:5px;">从 CFA 基础到真实市场</div>
+  {% set exam_countdown = (report.weekly_finance_review.exam_countdown if report.weekly_finance_review else report.finance_lesson.exam_countdown) %}
+  {% if exam_countdown %}
+  <div class="risk-box" style="background:#fdf0e8;border-color:#f0c9a8;color:#8a4a1c;font-weight:700;margin-bottom:5px;margin-top:0;">{{ exam_countdown }}</div>
+  {% endif %}
 
   {% if report.weekly_finance_review %}
   {% set r = report.weekly_finance_review %}

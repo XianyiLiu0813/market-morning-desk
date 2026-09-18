@@ -530,7 +530,8 @@ class FinanceLesson(BaseModel):
     topic_name: str
     track: FinanceTrack
     difficulty: FinanceDifficulty
-    progress_label: Optional[str] = None  # e.g. "Foundation · 6/38 已学完"
+    progress_label: Optional[str] = None  # e.g. "Foundation · 6/89 已学完"
+    exam_countdown: Optional[str] = None  # e.g. "距离 CFA Level 1 还有 157 天"
     review_recap: Optional[str] = None  # Part 9: "30秒复习" of a due-for-review prior topic
     one_liner: str
     core_concept: str
@@ -564,6 +565,7 @@ class WeeklyFinanceReview(BaseModel):
     knowledge_chain: List[str] = Field(default_factory=list)  # e.g. ["Expected Return", "Variance", ...]
     connections_summary: str
     quiz: List[QuizQuestion] = Field(default_factory=list)
+    exam_countdown: Optional[str] = None
 
 
 class MorningReport(BaseModel):

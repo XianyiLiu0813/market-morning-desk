@@ -24,6 +24,15 @@ finance_learning:
   daily_quiz: true
   spaced_repetition: true
   review_intervals_days: [3, 7, 30]   # Part 9: 30-second review schedule
+  # Set once an actual exam date is booked. While today <= exam_date,
+  # topic selection prioritizes CFA_FOUNDATION-track topics over
+  # BEYOND_CFA ones (see analysis/finance_learning.py::select_next_topic)
+  # so the full CFA syllabus gets covered with buffer room before the
+  # exam, and the report shows a countdown. Set to null to disable exam
+  # prep mode and go back to the original curriculum-order-only selection
+  # (both tracks mixed as they appear in the topics list).
+  exam_name: "CFA Level 1"
+  exam_date: "2027-02-22"
 
 # rotation_day values: mon,tue,wed,thu,fri,sat,sun (Part 17)
 category_rotation:
@@ -462,3 +471,590 @@ topics:
     cfa_connection: ["Portfolio Management"]
     beyond_cfa_note: null
     where_used: ["Risk Management", "Hedge Fund", "Bank Trading Desk"]
+
+  # ==================================================================
+  # CFA Level 1 exam-prep expansion (added once a firm exam date was
+  # set - see finance_learning.exam_date in this file's settings block
+  # above). Fills in the topic areas the original 38-topic curriculum
+  # only lightly touched or skipped entirely (Ethics, Economics), and
+  # substantially deepens Financial Statement Analysis, Corporate
+  # Issuers, Equity, Fixed Income, Derivatives, Alternative Investments
+  # and Portfolio Management to genuinely cover the CFA L1 syllabus's
+  # 10 topic areas, not just a curated intuition-builder subset.
+  #
+  # NOTE ON HONESTY: this gives real breadth and the right foundation,
+  # but is not a substitute for a proper CFA question bank / timed mock
+  # exams - CFA L1 is heavily practice-question-driven. Pair this daily
+  # lesson with dedicated question-bank practice, especially in the
+  # final 4-6 weeks before the exam.
+  # ==================================================================
+
+  # ---------------- ETHICS & PROFESSIONAL STANDARDS ----------------
+  - id: ethics_intro
+    name_en: "Ethics in the Investment Profession"
+    name_zh: "投资行业中的职业道德"
+    category: ethics
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Ethical and Professional Standards"]
+    beyond_cfa_note: "职业道德在 CFA 考试中权重通常是所有科目里最高的之一，也是从业资格的底线要求，不只是应试知识。"
+    where_used: ["全行业通用", "合规", "资产管理"]
+
+  - id: ethics_code_standards
+    name_en: "CFA Institute Code of Ethics & Standards Overview"
+    name_zh: "CFA协会职业道德准则与行为标准概览"
+    category: ethics
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [ethics_intro]
+    cfa_connection: ["Ethical and Professional Standards"]
+    beyond_cfa_note: null
+    where_used: ["全行业通用", "合规"]
+
+  - id: ethics_material_nonpublic
+    name_en: "Material Non-Public Information"
+    name_zh: "重大非公开信息"
+    category: ethics
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [ethics_code_standards]
+    cfa_connection: ["Ethical and Professional Standards"]
+    beyond_cfa_note: null
+    where_used: ["合规", "买方/卖方研究"]
+
+  - id: ethics_market_manipulation
+    name_en: "Market Manipulation"
+    name_zh: "市场操纵"
+    category: ethics
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [ethics_code_standards]
+    cfa_connection: ["Ethical and Professional Standards"]
+    beyond_cfa_note: null
+    where_used: ["合规", "监管"]
+
+  - id: ethics_fiduciary_duty
+    name_en: "Fiduciary Duty & Loyalty to Clients"
+    name_zh: "受信责任与对客户的忠诚义务"
+    category: ethics
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [ethics_code_standards]
+    cfa_connection: ["Ethical and Professional Standards"]
+    beyond_cfa_note: null
+    where_used: ["资产管理", "财富管理"]
+
+  - id: ethics_suitability
+    name_en: "Suitability"
+    name_zh: "适当性原则"
+    category: ethics
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [ethics_fiduciary_duty]
+    cfa_connection: ["Ethical and Professional Standards"]
+    beyond_cfa_note: null
+    where_used: ["财富管理", "投资顾问"]
+
+  - id: ethics_research_objectivity
+    name_en: "Independence & Objectivity in Research"
+    name_zh: "研究的独立性与客观性"
+    category: ethics
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [ethics_code_standards]
+    cfa_connection: ["Ethical and Professional Standards"]
+    beyond_cfa_note: null
+    where_used: ["卖方研究", "投资银行"]
+
+  - id: ethics_conflicts_of_interest
+    name_en: "Conflicts of Interest & Disclosure"
+    name_zh: "利益冲突与披露"
+    category: ethics
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [ethics_code_standards]
+    cfa_connection: ["Ethical and Professional Standards"]
+    beyond_cfa_note: null
+    where_used: ["全行业通用"]
+
+  - id: ethics_professionalism
+    name_en: "Misrepresentation & Professional Conduct"
+    name_zh: "虚假陈述与职业行为"
+    category: ethics
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [ethics_code_standards]
+    cfa_connection: ["Ethical and Professional Standards"]
+    beyond_cfa_note: null
+    where_used: ["全行业通用"]
+
+  - id: ethics_gips
+    name_en: "GIPS: Global Investment Performance Standards (Overview)"
+    name_zh: "GIPS 全球投资业绩标准概览"
+    category: ethics
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [ethics_code_standards]
+    cfa_connection: ["Ethical and Professional Standards"]
+    beyond_cfa_note: "GIPS 是资产管理机构对外披露业绩时的行业公认规范，理解它有助于判断一份业绩报告是否可信、可比。"
+    where_used: ["资产管理", "业绩归因"]
+
+  # ---------------- ECONOMICS ----------------
+  - id: econ_supply_demand
+    name_en: "Supply & Demand Basics"
+    name_zh: "供给与需求基础"
+    category: economics
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Economics"]
+    beyond_cfa_note: null
+    where_used: ["宏观研究", "大宗商品"]
+
+  - id: econ_business_cycle
+    name_en: "The Business Cycle"
+    name_zh: "经济周期"
+    category: economics
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Economics"]
+    beyond_cfa_note: "宏观交易员日常工作很大一部分就是判断当前处于经济周期的哪个阶段，并据此调整行业/风格配置。"
+    where_used: ["宏观交易", "资产配置"]
+
+  - id: econ_inflation
+    name_en: "Inflation & CPI"
+    name_zh: "通货膨胀与 CPI"
+    category: economics
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Economics"]
+    beyond_cfa_note: null
+    where_used: ["宏观交易", "固定收益"]
+
+  - id: econ_monetary_policy
+    name_en: "Monetary Policy"
+    name_zh: "货币政策"
+    category: economics
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [econ_inflation]
+    cfa_connection: ["Economics"]
+    beyond_cfa_note: null
+    where_used: ["宏观交易", "固定收益", "央行观察"]
+
+  - id: econ_fiscal_policy
+    name_en: "Fiscal Policy"
+    name_zh: "财政政策"
+    category: economics
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [econ_business_cycle]
+    cfa_connection: ["Economics"]
+    beyond_cfa_note: null
+    where_used: ["宏观交易"]
+
+  - id: econ_gdp
+    name_en: "GDP & Economic Growth"
+    name_zh: "GDP 与经济增长"
+    category: economics
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Economics"]
+    beyond_cfa_note: null
+    where_used: ["宏观研究"]
+
+  - id: econ_exchange_rates
+    name_en: "Exchange Rate Determination"
+    name_zh: "汇率决定理论"
+    category: economics
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [econ_monetary_policy]
+    cfa_connection: ["Economics"]
+    beyond_cfa_note: "外汇交易员会综合利率差、购买力平价、资本流向等多个框架来判断汇率走势，而非单一模型。"
+    where_used: ["外汇交易", "宏观交易"]
+
+  - id: econ_trade
+    name_en: "International Trade Basics"
+    name_zh: "国际贸易基础"
+    category: economics
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Economics"]
+    beyond_cfa_note: null
+    where_used: ["宏观研究"]
+
+  # ---------------- FINANCIAL STATEMENT ANALYSIS (expansion) ----------------
+  - id: fsa_revenue_recognition
+    name_en: "Revenue Recognition"
+    name_zh: "收入确认"
+    category: financial_statement_analysis
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [fs_overview]
+    cfa_connection: ["Financial Statement Analysis"]
+    beyond_cfa_note: null
+    where_used: ["股票研究", "审计", "尽职调查"]
+
+  - id: fsa_inventory
+    name_en: "Inventory Accounting (FIFO vs LIFO)"
+    name_zh: "存货核算（先进先出 vs 后进先出）"
+    category: financial_statement_analysis
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [fs_overview]
+    cfa_connection: ["Financial Statement Analysis"]
+    beyond_cfa_note: null
+    where_used: ["股票研究", "信用分析"]
+
+  - id: fsa_depreciation
+    name_en: "Depreciation Methods"
+    name_zh: "折旧方法"
+    category: financial_statement_analysis
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [fs_overview]
+    cfa_connection: ["Financial Statement Analysis"]
+    beyond_cfa_note: null
+    where_used: ["股票研究", "投资银行"]
+
+  - id: fsa_working_capital
+    name_en: "Working Capital"
+    name_zh: "营运资本"
+    category: financial_statement_analysis
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [fs_overview]
+    cfa_connection: ["Financial Statement Analysis"]
+    beyond_cfa_note: null
+    where_used: ["信用分析", "股票研究"]
+
+  - id: fsa_ratios
+    name_en: "Financial Ratios Overview"
+    name_zh: "财务比率概览"
+    category: financial_statement_analysis
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [margins, eps_earnings]
+    cfa_connection: ["Financial Statement Analysis"]
+    beyond_cfa_note: null
+    where_used: ["股票研究", "信用分析"]
+
+  - id: fsa_quality_of_earnings
+    name_en: "Quality of Earnings"
+    name_zh: "盈利质量"
+    category: financial_statement_analysis
+    track: cfa_foundation
+    difficulty: intermediate
+    prerequisites: [fsa_ratios]
+    cfa_connection: ["Financial Statement Analysis"]
+    beyond_cfa_note: "机构投资者常常专门设有「会计侦探」（forensic accounting）分析师，专门排查盈利质量存在问题的公司。"
+    where_used: ["股票研究", "做空研究"]
+
+  # ---------------- CORPORATE ISSUERS (expansion) ----------------
+  - id: corp_capital_structure
+    name_en: "Capital Structure"
+    name_zh: "资本结构"
+    category: corporate_issuers
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [wacc]
+    cfa_connection: ["Corporate Issuers"]
+    beyond_cfa_note: null
+    where_used: ["投资银行", "企业金融"]
+
+  - id: corp_cost_of_equity
+    name_en: "Cost of Equity"
+    name_zh: "股权成本"
+    category: corporate_issuers
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [wacc]
+    cfa_connection: ["Corporate Issuers", "Equity Investments"]
+    beyond_cfa_note: null
+    where_used: ["股票研究", "投资银行"]
+
+  - id: corp_dividend_policy
+    name_en: "Dividend Policy"
+    name_zh: "股利政策"
+    category: corporate_issuers
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [corp_capital_structure]
+    cfa_connection: ["Corporate Issuers"]
+    beyond_cfa_note: null
+    where_used: ["股票研究", "企业金融"]
+
+  - id: corp_governance
+    name_en: "Corporate Governance Basics"
+    name_zh: "公司治理基础"
+    category: corporate_issuers
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Corporate Issuers"]
+    beyond_cfa_note: null
+    where_used: ["ESG投资", "股票研究"]
+
+  # ---------------- EQUITY INVESTMENTS (expansion) ----------------
+  - id: equity_market_structure
+    name_en: "Equity Market Structure"
+    name_zh: "股票市场结构"
+    category: equity_investments
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Equity Investments"]
+    beyond_cfa_note: null
+    where_used: ["交易台", "做市"]
+
+  - id: equity_pe_ratio
+    name_en: "P/E Ratio"
+    name_zh: "市盈率"
+    category: equity_investments
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [eps_earnings]
+    cfa_connection: ["Equity Investments"]
+    beyond_cfa_note: null
+    where_used: ["股票研究", "资产管理"]
+
+  - id: equity_ev_ebitda
+    name_en: "EV/EBITDA"
+    name_zh: "企业价值倍数（EV/EBITDA）"
+    category: equity_investments
+    track: cfa_foundation
+    difficulty: intermediate
+    prerequisites: [equity_pe_ratio]
+    cfa_connection: ["Equity Investments"]
+    beyond_cfa_note: "私募股权和并购交易中，EV/EBITDA 比 P/E 更常用，因为它不受资本结构（杠杆水平）差异的干扰。"
+    where_used: ["投资银行", "私募股权", "并购"]
+
+  - id: equity_pb_ratio
+    name_en: "P/B Ratio"
+    name_zh: "市净率"
+    category: equity_investments
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [equity_pe_ratio]
+    cfa_connection: ["Equity Investments"]
+    beyond_cfa_note: null
+    where_used: ["价值投资", "银行股研究"]
+
+  - id: equity_growth_vs_value
+    name_en: "Growth vs Value Investing"
+    name_zh: "成长股投资与价值股投资"
+    category: equity_investments
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [equity_pe_ratio]
+    cfa_connection: ["Equity Investments", "Portfolio Management"]
+    beyond_cfa_note: null
+    where_used: ["资产管理", "对冲基金"]
+
+  - id: equity_competitive_advantage
+    name_en: "Competitive Advantage & Moats"
+    name_zh: "竞争优势与护城河"
+    category: equity_investments
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Equity Investments"]
+    beyond_cfa_note: null
+    where_used: ["股票研究", "长期投资"]
+
+  # ---------------- FIXED INCOME (expansion) ----------------
+  - id: fi_bond_pricing
+    name_en: "Bond Pricing Basics"
+    name_zh: "债券定价基础"
+    category: fixed_income
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [rates_yields]
+    cfa_connection: ["Fixed Income"]
+    beyond_cfa_note: null
+    where_used: ["固定收益交易", "资产管理"]
+
+  - id: fi_ytm
+    name_en: "Yield to Maturity"
+    name_zh: "到期收益率"
+    category: fixed_income
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [fi_bond_pricing]
+    cfa_connection: ["Fixed Income"]
+    beyond_cfa_note: null
+    where_used: ["固定收益交易"]
+
+  - id: fi_convexity
+    name_en: "Convexity"
+    name_zh: "凸性"
+    category: fixed_income
+    track: cfa_foundation
+    difficulty: intermediate
+    prerequisites: [duration]
+    cfa_connection: ["Fixed Income"]
+    beyond_cfa_note: "久期只是一阶近似，凸性是二阶修正——利率大幅波动时，忽略凸性会明显低估/高估债券价格变化。"
+    where_used: ["固定收益交易", "利率衍生品"]
+
+  - id: fi_default_risk
+    name_en: "Default Risk & Credit Ratings"
+    name_zh: "违约风险与信用评级"
+    category: fixed_income
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [rates_yields]
+    cfa_connection: ["Fixed Income"]
+    beyond_cfa_note: null
+    where_used: ["信用研究", "固定收益"]
+
+  - id: fi_term_premium
+    name_en: "Term Premium"
+    name_zh: "期限溢价"
+    category: fixed_income
+    track: cfa_foundation
+    difficulty: intermediate
+    prerequisites: [yield_curve]
+    cfa_connection: ["Fixed Income", "Economics"]
+    beyond_cfa_note: null
+    where_used: ["宏观交易", "固定收益"]
+
+  # ---------------- DERIVATIVES (expansion) ----------------
+  - id: deriv_forwards
+    name_en: "Forwards"
+    name_zh: "远期合约"
+    category: derivatives
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [options_basics]
+    cfa_connection: ["Derivatives"]
+    beyond_cfa_note: null
+    where_used: ["外汇交易", "大宗商品对冲"]
+
+  - id: deriv_futures
+    name_en: "Futures"
+    name_zh: "期货合约"
+    category: derivatives
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [deriv_forwards]
+    cfa_connection: ["Derivatives"]
+    beyond_cfa_note: null
+    where_used: ["大宗商品交易", "CTA"]
+
+  - id: deriv_swaps
+    name_en: "Swaps"
+    name_zh: "互换合约"
+    category: derivatives
+    track: cfa_foundation
+    difficulty: intermediate
+    prerequisites: [deriv_futures]
+    cfa_connection: ["Derivatives"]
+    beyond_cfa_note: null
+    where_used: ["利率交易", "企业风险管理"]
+
+  - id: deriv_payoff_diagrams
+    name_en: "Option Payoff Diagrams"
+    name_zh: "期权损益图"
+    category: derivatives
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [option_value]
+    cfa_connection: ["Derivatives"]
+    beyond_cfa_note: null
+    where_used: ["期权交易"]
+
+  # ---------------- ALTERNATIVE INVESTMENTS (expansion) ----------------
+  - id: alt_real_estate
+    name_en: "Real Estate as an Asset Class"
+    name_zh: "房地产作为资产类别"
+    category: alternative_investments
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Alternative Investments"]
+    beyond_cfa_note: null
+    where_used: ["另类投资", "REITs"]
+
+  - id: alt_infrastructure
+    name_en: "Infrastructure Investments"
+    name_zh: "基础设施投资"
+    category: alternative_investments
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Alternative Investments"]
+    beyond_cfa_note: null
+    where_used: ["主权基金", "养老金"]
+
+  - id: alt_commodities
+    name_en: "Commodities as an Asset Class"
+    name_zh: "大宗商品作为资产类别"
+    category: alternative_investments
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Alternative Investments"]
+    beyond_cfa_note: null
+    where_used: ["大宗商品交易", "宏观对冲"]
+
+  # ---------------- PORTFOLIO MANAGEMENT (expansion) ----------------
+  - id: pm_risk_tolerance
+    name_en: "Risk Tolerance & Investor Objectives"
+    name_zh: "风险承受能力与投资者目标"
+    category: portfolio_management
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Portfolio Management"]
+    beyond_cfa_note: null
+    where_used: ["财富管理", "投资顾问"]
+
+  - id: pm_asset_allocation
+    name_en: "Strategic Asset Allocation"
+    name_zh: "战略资产配置"
+    category: portfolio_management
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: [diversification]
+    cfa_connection: ["Portfolio Management"]
+    beyond_cfa_note: null
+    where_used: ["资产管理", "养老金"]
+
+  - id: pm_efficient_frontier
+    name_en: "The Efficient Frontier"
+    name_zh: "有效前沿"
+    category: portfolio_management
+    track: cfa_foundation
+    difficulty: intermediate
+    prerequisites: [diversification]
+    cfa_connection: ["Portfolio Management"]
+    beyond_cfa_note: null
+    where_used: ["资产管理", "量化投资"]
+
+  - id: pm_benchmarking
+    name_en: "Benchmarking a Portfolio"
+    name_zh: "组合基准比较"
+    category: portfolio_management
+    track: cfa_foundation
+    difficulty: foundation
+    prerequisites: []
+    cfa_connection: ["Portfolio Management"]
+    beyond_cfa_note: null
+    where_used: ["资产管理", "业绩归因"]
+
+  - id: pm_portfolio_construction
+    name_en: "Portfolio Construction Basics"
+    name_zh: "组合构建基础"
+    category: portfolio_management
+    track: cfa_foundation
+    difficulty: intermediate
+    prerequisites: [pm_asset_allocation]
+    cfa_connection: ["Portfolio Management"]
+    beyond_cfa_note: null
+    where_used: ["资产管理"]
