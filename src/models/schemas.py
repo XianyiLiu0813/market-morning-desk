@@ -81,6 +81,19 @@ class ImportanceLevel(str, Enum):
     LOW = "LOW"
 
 
+class EvidenceTier(str, Enum):
+    """Per-story evidence-strength badge (borrowed from a sample morning
+    note's "CONFIRMED DRIVER / LIKELY AMPLIFIER / POSSIBLE-UNCONFIRMED"
+    labeling, applied at the level our source-tier data already supports).
+    Computed deterministically from the cluster's best source tier - see
+    analysis/story_analysis.py::compute_evidence_tier - never LLM-judged,
+    so it stays an auditable fact about sourcing, not an opinion."""
+
+    CONFIRMED = "CONFIRMED"      # Tier 1: SEC/Fed/official primary source
+    LIKELY = "LIKELY"            # Tier 2: Reuters/Bloomberg/CNBC-grade media
+    UNCONFIRMED = "UNCONFIRMED"  # Tier 3+: secondary media, single-source, unverified
+
+
 class CompanySignal(str, Enum):
     POSITIVE = "POSITIVE"
     NEUTRAL = "NEUTRAL"
@@ -328,6 +341,7 @@ class StoryAnalysis(BaseModel):
     cluster_id: str
     title: str
     importance: ImportanceLevel
+    evidence_tier: EvidenceTier = EvidenceTier.UNCONFIRMED
     source_names: List[str] = Field(default_factory=list)
     fact: str
     why_it_matters: str
@@ -490,6 +504,20 @@ class YesterdayReviewItem(BaseModel):
     lesson: Optional[str] = None
 
 
+class BottomLineRow(BaseModel):
+    """One row of the end-of-report "Bottom Line" summary table (borrowed
+    from a sample morning note's closing table: variable / current state /
+    change vs yesterday / what to verify next). Built deterministically in
+    analysis/change_detection.py::build_bottom_line from data the report
+    has already computed (dashboard, theme views, regime) - not a
+    separate LLM call."""
+
+    variable: str
+    current_state: str
+    change_vs_yesterday: str
+    what_to_verify: str
+
+
 class DataQualityStatus(BaseModel):
     ok: bool = True
     warnings: List[str] = Field(default_factory=list)
@@ -578,6 +606,7 @@ class MorningReport(BaseModel):
     dashboard: Optional[TraderDashboard] = None
     regime: MarketRegimeView
     what_changed_overnight: List[str] = Field(default_factory=list)
+    bottom_line: List[BottomLineRow] = Field(default_factory=list)
     three_things_that_matter: List[str] = Field(default_factory=list)
     main_risk_today: Optional[str] = None
     one_sentence_summary: Optional[str] = None

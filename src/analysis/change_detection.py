@@ -24,7 +24,7 @@ from typing import Dict, List, Optional
 from sqlalchemy import select
 
 from src.models.database import AnalysisResultRow, ThemeDailyViewRow, get_session
-from src.models.schemas import MarketSnapshot, ThemeView, TraderDashboard
+from src.models.schemas import BottomLineRow, MarketSnapshot, ThemeView, TraderDashboard
 
 
 def _get_yesterday_theme_views(run_date: date) -> Dict[str, ThemeDailyViewRow]:
@@ -160,3 +160,56 @@ def build_what_changed_overnight(
     if dashboard is not None:
         changes.extend(detect_dashboard_changes(dashboard, snapshot))
     return changes
+
+
+def build_bottom_line(
+    dashboard: Optional[TraderDashboard],
+    theme_views: List[ThemeView],
+    snapshot: MarketSnapshot,
+) -> List[BottomLineRow]:
+    """Deterministic "Bottom Line" summary table (borrowed from a sample
+    morning note's closing table) - reuses data the report has already
+    computed (dashboard states, theme structural/tactical views, the
+    US10Y bp move) rather than a separate LLM call, same discipline as
+    the rest of this module. Capped at 6 rows (3 macro + up to 3 themes)
+    so it stays a scannable summary, not a second full report."""
+    rows: List[BottomLineRow] = []
+
+    if dashboard is not None:
+        us10y = snapshot.get("US10Y")
+        bp_note = f"US10Y {us10y.bp_change:+.1f}bp" if us10y and us10y.bp_change is not None else "数据不足"
+        rows.append(BottomLineRow(
+            variable="利率路径",
+            current_state=dashboard.rates,
+            change_vs_yesterday=bp_note,
+            what_to_verify="后续经济数据与央行表态能否延续当前方向",
+        ))
+        vix = snapshot.get("^VIX")
+        vix_note = f"VIX {vix.daily_pct:+.2f}%" if vix and vix.daily_pct is not None else "数据不足"
+        rows.append(BottomLineRow(
+            variable="风险偏好",
+            current_state=dashboard.risk_appetite,
+            change_vs_yesterday=vix_note,
+            what_to_verify="情绪改善/恶化是否只是单日反应，还是能延续",
+        ))
+        dxy = snapshot.get("DXY")
+        dxy_note = f"DXY {dxy.daily_pct:+.2f}%" if dxy and dxy.daily_pct is not None else "数据不足"
+        rows.append(BottomLineRow(
+            variable="美元",
+            current_state=dashboard.usd,
+            change_vs_yesterday=dxy_note,
+            what_to_verify="美元走势对新兴市场、大宗商品及美股盈利的传导",
+        ))
+
+    # Up to 3 themes with a genuine day-over-day change or fresh evidence
+    # (same exception-based-reporting rule as the Theme Map, Part 8).
+    notable_themes = [t for t in theme_views if t.is_meaningful_change][:3]
+    for t in notable_themes:
+        rows.append(BottomLineRow(
+            variable=t.theme_name,
+            current_state=f"结构性 {t.structural_view.value} / 战术性 {t.tactical_view.value}",
+            change_vs_yesterday=t.change_vs_yesterday or f"价格确认：{t.price_confirmation}",
+            what_to_verify=t.risk or "后续新闻与价格信号是否持续印证当前判断",
+        ))
+
+    return rows

@@ -190,7 +190,9 @@
   <div class="section-title">宏观要闻</div>
   {% for s in report.macro_stories %}
   <div class="card">
-    <div class="item-title">{{ s.title }}</div>
+    <div class="item-title">{{ s.title }}
+      <span class="badge {{ 'badge-bullish' if s.evidence_tier.value == 'CONFIRMED' else 'badge-bearish' if s.evidence_tier.value == 'UNCONFIRMED' else 'badge-neutral' }}">{{ s.evidence_tier.value }}</span>
+    </div>
     <p><strong>事实：</strong>{{ s.fact }}</p>
     <div class="label">为什么重要</div><p>{{ s.why_it_matters }}</p>
   </div>
@@ -233,7 +235,9 @@
   <div class="section-title">隔夜真正重要的事</div>
   {% for s in report.top_stories %}
   <div class="card">
-    <div class="item-title">{{ s.title }} <span class="badge badge-neutral">{{ s.importance.value }}</span></div>
+    <div class="item-title">{{ s.title }} <span class="badge badge-neutral">{{ s.importance.value }}</span>
+      <span class="badge {{ 'badge-bullish' if s.evidence_tier.value == 'CONFIRMED' else 'badge-bearish' if s.evidence_tier.value == 'UNCONFIRMED' else 'badge-neutral' }}">{{ s.evidence_tier.value }}</span>
+    </div>
     <p><strong>事实：</strong> {{ s.fact }}</p>
     <p><strong>为什么重要：</strong> {{ s.why_it_matters }}</p>
     {% if s.price_check %}<p><strong>价格验证：</strong> {{ s.price_check | join(', ') }} — {{ s.market_impact }}</p>
@@ -326,6 +330,24 @@
     {% if report.learn_one_thing.common_mistake %}<div class="label">常见新手误区</div><p>{{ report.learn_one_thing.common_mistake }}</p>{% endif %}
     <div class="label">交易者启示</div><p>{{ report.learn_one_thing.trader_takeaway }}</p>
   </div>
+</div>
+{% endif %}
+
+<!-- BOTTOM LINE -->
+{% if report.bottom_line %}
+<div class="section">
+  <div class="section-title">今日结论一览 · Bottom Line</div>
+  <table class="dash risk-cal">
+    <tr><th>变量</th><th>当前状态</th><th>比昨天</th><th>下一步验证</th></tr>
+    {% for row in report.bottom_line %}
+    <tr>
+      <td><strong>{{ row.variable }}</strong></td>
+      <td>{{ row.current_state }}</td>
+      <td>{{ row.change_vs_yesterday }}</td>
+      <td>{{ row.what_to_verify }}</td>
+    </tr>
+    {% endfor %}
+  </table>
 </div>
 {% endif %}
 

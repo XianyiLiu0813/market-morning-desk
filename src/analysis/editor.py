@@ -3,12 +3,13 @@ produces the 60-second view fields: three things that matter, main risk,
 one-sentence summary, dominant narrative)."""
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from src.models.schemas import (
     CompanyAnalysis,
     EditorialSynthesis,
     MarketRegimeView,
+    MarketSnapshot,
     StoryAnalysis,
     ThemeView,
     TradeIdea,
@@ -18,11 +19,24 @@ from src.analysis.llm_client import call_llm_json
 
 TASK = "editorial_synthesis"
 
-INSTRUCTIONS = """Synthesize INPUT_DATA (regime, top stories, theme views, trade ideas) into a \
-final editorial layer for a morning research note. Each theme now carries an INDEPENDENT \
-structural_view (multi-quarter thesis) and tactical_view (days-to-weeks trade-worthiness) - when \
-you reference a theme, be precise about which one you mean (a structurally bullish theme can still \
-be tactically neutral this week).
+# Symbols pulled into INPUT_DATA.cross_asset_snapshot for dominant_narrative
+# to cite concretely (Part: "cross-asset narrative enhancement" - borrowed
+# from a sample morning note that threads ONE storyline through rates, FX,
+# commodities and equities instead of listing them separately).
+CROSS_ASSET_SYMBOLS = ["US2Y", "US10Y", "DXY", "GLD", "CL=F", "^VIX"]
+
+INSTRUCTIONS = """Synthesize INPUT_DATA (regime, top stories, theme views, trade ideas, \
+cross_asset_snapshot) into a final editorial layer for a morning research note. Each theme now \
+carries an INDEPENDENT structural_view (multi-quarter thesis) and tactical_view (days-to-weeks \
+trade-worthiness) - when you reference a theme, be precise about which one you mean (a \
+structurally bullish theme can still be tactically neutral this week).
+
+For dominant_narrative specifically: build ONE coherent cross-asset storyline and cite 2-3 \
+SPECIFIC numbers from INPUT_DATA.cross_asset_snapshot to support it (e.g. "US10Y moved X bp while \
+DXY did Y, consistent with..." ) - don't just list each asset's move in isolation; explain how they \
+confirm or contradict each other under the dominant theme. If rates/VIX/gold/oil don't cohere into \
+one clean story today, say so explicitly (e.g. "cross-asset signals are mixed: X points one way, Y \
+points another") rather than forcing a false throughline (Principle 4: avoid false causality).
 
 Return JSON:
 {
@@ -30,8 +44,8 @@ Return JSON:
   "main_risk_today": "the single biggest risk to the prevailing view today",
   "one_sentence_summary": "one sentence capturing the market's overall state",
   "dominant_narrative": "2-4 sentences on what the market is actually trading right now (e.g. \
-rates, AI capex, growth, inflation, liquidity, China policy, geopolitics) - avoid just listing \
-disconnected facts, explain the throughline",
+rates, AI capex, growth, inflation, liquidity, China policy, geopolitics), citing 2-3 specific \
+cross_asset_snapshot numbers - avoid just listing disconnected facts, explain the throughline",
   "mental_model": {
     "what_changed": "...",
     "what_did_not_change": "...",
@@ -46,15 +60,38 @@ disconnected facts, explain the throughline",
 Keep every field grounded in INPUT_DATA - use hedged language for anything inferential."""
 
 
+def _build_cross_asset_snapshot(snapshot: Optional[MarketSnapshot]) -> List[Dict[str, Any]]:
+    if snapshot is None:
+        return []
+    out = []
+    for sym in CROSS_ASSET_SYMBOLS:
+        asset = snapshot.get(sym)
+        if asset is None:
+            continue
+        if asset.is_rate:
+            out.append({
+                "symbol": sym, "display_name": asset.display_name,
+                "level": asset.last_price, "bp_change": asset.bp_change,
+            })
+        else:
+            out.append({
+                "symbol": sym, "display_name": asset.display_name,
+                "daily_pct": asset.daily_pct,
+            })
+    return out
+
+
 def synthesize_report(
     llm: LLMProvider,
     regime: MarketRegimeView,
     top_stories: List[StoryAnalysis],
     themes: List[ThemeView],
     trade_ideas: List[TradeIdea],
+    snapshot: Optional[MarketSnapshot] = None,
 ) -> EditorialSynthesis:
     input_data: Dict[str, Any] = {
         "regime": regime.model_dump(mode="json"),
+        "cross_asset_snapshot": _build_cross_asset_snapshot(snapshot),
         "top_stories": [
             {"title": s.title, "fact": s.fact, "why_it_matters": s.why_it_matters}
             for s in top_stories[:7]

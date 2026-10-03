@@ -640,6 +640,31 @@ def _educational_content(data: Dict[str, Any]) -> Dict[str, Any]:
 # editorial_synthesis (V2: structural_view/tactical_view aware)
 # --------------------------------------------------------------------------
 
+_CROSS_ASSET_LABELS = {
+    "US2Y": "美债2年期", "US10Y": "美债10年期", "DXY": "美元指数",
+    "GLD": "黄金", "CL=F": "WTI原油", "^VIX": "VIX",
+}
+
+
+def _cross_asset_sentence(cross_asset: List[Dict[str, Any]]) -> str:
+    """Part: cross-asset narrative enhancement - weave 2-3 concrete
+    cross-asset numbers into one sentence instead of leaving
+    dominant_narrative purely about the leading theme. Deterministic
+    formatting, same discipline as the rest of this module."""
+    if not cross_asset:
+        return ""
+    bits = []
+    for a in cross_asset[:3]:
+        label = _CROSS_ASSET_LABELS.get(a["symbol"], a["symbol"])
+        if "bp_change" in a and a.get("bp_change") is not None:
+            bits.append(f"{label} {a['bp_change']:+.1f}bp")
+        elif a.get("daily_pct") is not None:
+            bits.append(f"{label} {a['daily_pct']:+.2f}%")
+    if not bits:
+        return ""
+    return f"跨资产信号：{('、'.join(bits))}——这几个信号之间是否相互印证，值得继续跟踪，而不是只看单一资产的涨跌。"
+
+
 def _editorial_synthesis(data: Dict[str, Any]) -> Dict[str, Any]:
     regime = data.get("regime", {})
     top_stories = data.get("top_stories", [])
@@ -668,12 +693,13 @@ def _editorial_synthesis(data: Dict[str, Any]) -> Dict[str, Any]:
         key=lambda t: 1 if t.get("structural_view") in ("BULLISH", "SLIGHTLY_BULLISH") else 0,
         default=None,
     )
+    cross_asset_sentence = _cross_asset_sentence(data.get("cross_asset_snapshot", []))
     dominant_narrative = (
         f"市场目前看起来主要围绕「{dominant_theme['name']}」板块的结构性强势展开"
-        f"（{regime.get('summary', '')}），战术层面{_TACTICAL_ZH.get(dominant_theme.get('tactical_view'), '仍需观察') if dominant_theme else ''}，"
-        "利率和中国政策等因素更多是次要的交叉影响，而非主导因素。"
+        f"（{regime.get('summary', '')}），战术层面{_TACTICAL_ZH.get(dominant_theme.get('tactical_view'), '仍需观察') if dominant_theme else ''}。"
+        f"{cross_asset_sentence}"
         if dominant_theme
-        else regime.get("summary", "现有数据不足以判断今日的主导交易逻辑。")
+        else regime.get("summary", "现有数据不足以判断今日的主导交易逻辑。") + cross_asset_sentence
     )
 
     ideas_note = (

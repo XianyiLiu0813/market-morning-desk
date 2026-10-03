@@ -18,10 +18,22 @@ from typing import Dict, List
 
 from src.analysis.llm_client import call_llm_json
 from src.analysis.price_check import price_check_for_tickers
-from src.models.schemas import MarketSnapshot, NewsCluster, StoryAnalysis, StoryAnalysisList
+from src.models.schemas import EvidenceTier, MarketSnapshot, NewsCluster, StoryAnalysis, StoryAnalysisList
 from src.providers.llm_base import LLMProvider
 
 TASK = "story_analysis"
+
+
+def compute_evidence_tier(best_tier: int) -> EvidenceTier:
+    """Deterministic, never LLM-judged (Section 26) - maps the cluster's
+    best source tier (Section 8's Tier 1-4 hierarchy) directly onto a
+    CONFIRMED/LIKELY/UNCONFIRMED badge, so it's an auditable fact about
+    sourcing, not an opinion about how solid the story "feels"."""
+    if best_tier <= 1:
+        return EvidenceTier.CONFIRMED
+    if best_tier == 2:
+        return EvidenceTier.LIKELY
+    return EvidenceTier.UNCONFIRMED
 
 INSTRUCTIONS = """For each cluster in INPUT_DATA.clusters, produce a full structured story \
 analysis. Base FACT strictly on the cluster's fact_hint/title/source data - do not add facts not \
@@ -106,9 +118,12 @@ def analyze_stories(
         # regardless of what the LLM echoed back, so a model that "helpfully"
         # tweaks a number can never introduce a hallucinated price into the
         # report (Section 26).
-        by_cluster = {p["cluster_id"]: p["price_check"] for p in payload}
+        price_check_by_cluster = {p["cluster_id"]: p["price_check"] for p in payload}
+        best_tier_by_cluster = {p["cluster_id"]: p["best_tier"] for p in payload}
         for s in stories:
-            if s.cluster_id in by_cluster:
-                s.price_check = by_cluster[s.cluster_id]
+            if s.cluster_id in price_check_by_cluster:
+                s.price_check = price_check_by_cluster[s.cluster_id]
+            if s.cluster_id in best_tier_by_cluster:
+                s.evidence_tier = compute_evidence_tier(best_tier_by_cluster[s.cluster_id])
         return stories
     return []

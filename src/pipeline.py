@@ -19,7 +19,7 @@ import tempfile
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 
-from src.analysis.change_detection import build_what_changed_overnight
+from src.analysis.change_detection import build_bottom_line, build_what_changed_overnight
 from src.analysis.company_analysis import analyze_companies
 from src.analysis.editor import synthesize_report
 from src.analysis.finance_learning import generate_finance_lesson, generate_weekly_review
@@ -172,7 +172,7 @@ def run_morning_pipeline(
         concepts = [educational.learn_one_thing.title] + [t.term for t in educational.terminology]
         record_concepts_taught(run_date, concepts)
 
-    synthesis = synthesize_report(llm, regime, top_story_analyses, theme_views, trade_ideas)
+    synthesis = synthesize_report(llm, regime, top_story_analyses, theme_views, trade_ideas, snapshot=snapshot)
     llm_calls += 1
 
     # 6. Trader's Dashboard + What Changed Overnight (V2 Part 5-6) - both
@@ -182,6 +182,7 @@ def run_morning_pipeline(
     what_changed_overnight = build_what_changed_overnight(
         run_date, theme_views, [l.value for l in regime.labels], regime.summary, dashboard, snapshot,
     )
+    bottom_line = build_bottom_line(dashboard, theme_views, snapshot)
 
     # 7. Yesterday review (optional, Section 22)
     yesterday_items = []
@@ -248,6 +249,7 @@ def run_morning_pipeline(
         dashboard=dashboard,
         regime=regime,
         what_changed_overnight=what_changed_overnight,
+        bottom_line=bottom_line,
         three_things_that_matter=synthesis.three_things_that_matter,
         main_risk_today=synthesis.main_risk_today,
         one_sentence_summary=synthesis.one_sentence_summary,

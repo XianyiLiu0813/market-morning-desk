@@ -94,6 +94,21 @@ def collect_market_snapshot(
             f"只获取到 {len(assets)} 项行情数据（最低要求 {min_assets} 项）"
         )
 
+    # Optional: 10Y real yield / breakeven inflation decomposition from
+    # FRED (yfinance has no clean TIPS series) - only attempted against a
+    # real market provider, and only if FRED_API_KEY is configured; a
+    # missing key or failed fetch just means these two rows are absent
+    # from the dashboard, not an error (Section 27 optional-provider
+    # philosophy).
+    if provider.name != "mock":
+        try:
+            from src.providers.real_market_fred import fetch_real_yield_assets
+
+            real_yield_assets = fetch_real_yield_assets()
+            assets = assets + real_yield_assets
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("FRED real-yield merge skipped: %s", exc)
+
     return MarketSnapshot(
         run_date=run_date,
         generated_at=now_utc(),
