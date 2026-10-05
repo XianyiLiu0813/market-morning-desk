@@ -64,7 +64,9 @@ def test_pdf_page_count_within_target_range_for_realistic_report(tmp_path):
     reader = PdfReader(out_path)
     # Generous bounds - the exact count depends on how much content the
     # mock analysis produces, but it should never balloon far past target.
-    assert 1 <= len(reader.pages) <= 8
+    # Bumped from 8 to 10: the v3 redesign (Key Stats, Mental Model,
+    # Dislocations, Source Index, deeper story cards) adds real content.
+    assert 1 <= len(reader.pages) <= 10
 
 
 def test_chrome_not_found_error_is_raised_cleanly(monkeypatch, minimal_report_kwargs):

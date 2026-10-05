@@ -72,6 +72,23 @@
   .changed-row { background:#fbf6ea; }
   .wct-list { margin:0; padding-left:14px; }
   .wct-list li { margin-bottom:2px; font-size:8pt; }
+  /* Key Stats: prominent numeric strip right under the header */
+  .key-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin-bottom:8px; }
+  .key-stat-card { background:#f7f8fa; border:1px solid #e4e6ea; border-radius:4px; padding:6px 7px; }
+  .key-stat-card .ks-label { font-size:6.3pt; color:#6b7280; text-transform:uppercase; letter-spacing:0.3px; }
+  .key-stat-card .ks-primary { font-size:11pt; font-weight:800; color:#0f1720; margin-top:1px; }
+  .key-stat-card .ks-primary.pos { color:#1e7e34; }
+  .key-stat-card .ks-primary.neg { color:#b3261e; }
+  .key-stat-card .ks-secondary { font-size:6.6pt; color:#8a8f98; margin-top:1px; }
+  /* Evidence tier: full-width callout bar instead of a tiny badge */
+  .evidence-box { font-size:6.6pt; font-weight:700; letter-spacing:0.2px; border-radius:3px; padding:2px 6px; display:inline-block; margin-bottom:3px; }
+  .evidence-confirmed { background:#e6f4ea; color:#1e7e34; }
+  .evidence-likely { background:#eef0f3; color:#4a4f57; }
+  .evidence-unconfirmed { background:#fbeaea; color:#b3261e; }
+  /* Dark "navy" header row for the two fast-read tables (Bottom Line, Risk Calendar) */
+  table.table-dark th { background:#0f1720; color:#f3f4f6; }
+  .dislocation-box { background:#f3eefc; border:1px solid #ddc9f2; border-radius:4px; padding:6px 8px; margin-bottom:5px; font-size:7.8pt; color:#4a2e7a; }
+  .dislocation-box:last-child { margin-bottom:0; }
 </style>
 </head>
 <body>
@@ -91,6 +108,19 @@
 <div class="risk-box" style="border-color:#f3c6c2;background:#fdeceb;color:#8a231c;">
   <strong>⚠ 数据质量提示 —— 降级模式</strong>
   {{ report.data_quality.reasons | join('；') }}
+</div>
+{% endif %}
+
+<!-- 0. KEY STATS: prominent numeric strip -->
+{% if report.key_stats %}
+<div class="key-stats">
+  {% for k in report.key_stats %}
+  <div class="key-stat-card">
+    <div class="ks-label">{{ k.label }}</div>
+    <div class="ks-primary {{ k.direction or '' }}">{{ k.primary }}</div>
+    {% if k.secondary %}<div class="ks-secondary">{{ k.secondary }}</div>{% endif %}
+  </div>
+  {% endfor %}
 </div>
 {% endif %}
 
@@ -153,6 +183,26 @@
   {% endif %}
 </div>
 
+<!-- 3b. MENTAL MODEL -->
+{% if report.mental_model %}
+<div class="section">
+  <div class="section-title">分析师思维模型 · Mental Model</div>
+  <div class="card">
+    {% set m = report.mental_model %}
+    <div class="grid2">
+      <div><div class="label">发生了什么变化</div><p>{{ m.what_changed }}</p></div>
+      <div><div class="label">什么没有变化</div><p>{{ m.what_did_not_change }}</p></div>
+      <div><div class="label">市场正在定价什么</div><p>{{ m.what_is_market_pricing }}</p></div>
+      <div><div class="label">一致预期是什么</div><p>{{ m.what_is_consensus }}</p></div>
+      <div><div class="label">市场可能错在哪里</div><p>{{ m.what_could_market_be_wrong_about }}</p></div>
+      <div><div class="label">什么数据会改变判断</div><p>{{ m.what_data_would_change_view }}</p></div>
+      <div><div class="label">哪些资产最能表达这个观点</div><p>{{ m.which_assets_express_view_best }}</p></div>
+      <div><div class="label">风险回报是否有吸引力</div><p>{{ m.is_risk_reward_attractive }}</p></div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <!-- 4. OVERNIGHT MARKET DASHBOARD -->
 <div class="section">
   <div class="section-title">隔夜市场仪表盘</div>
@@ -190,11 +240,17 @@
   <div class="section-title">宏观要闻</div>
   {% for s in report.macro_stories %}
   <div class="card">
-    <div class="item-title">{{ s.title }}
-      <span class="badge {{ 'badge-bullish' if s.evidence_tier.value == 'CONFIRMED' else 'badge-bearish' if s.evidence_tier.value == 'UNCONFIRMED' else 'badge-neutral' }}">{{ s.evidence_tier.value }}</span>
-    </div>
+    <div class="evidence-box evidence-{{ s.evidence_tier.value | lower }}">{{ s.evidence_tier.value | evidence_caption }}</div>
+    <div class="item-title">{{ s.title }}</div>
     <p><strong>事实：</strong>{{ s.fact }}</p>
     <div class="label">为什么重要</div><p>{{ s.why_it_matters }}</p>
+    {% if s.is_priced_in %}<div class="label">是否已被市场price in</div><p>{{ s.is_priced_in }}</p>{% endif %}
+    {% if s.what_to_watch_next %}<div class="label">下一步关注</div><p>{{ s.what_to_watch_next }}</p>{% endif %}
+    {% if s.what_would_invalidate %}<div class="label">什么会证伪这个判断</div><p>{{ s.what_would_invalidate }}</p>{% endif %}
+    {% if s.who_benefits or s.who_may_be_hurt %}
+    <div class="label">受益 / 承压方</div>
+    <p>{% if s.who_benefits %}受益：{{ s.who_benefits | join(', ') }}{% endif %}{% if s.who_benefits and s.who_may_be_hurt %} &nbsp;|&nbsp; {% endif %}{% if s.who_may_be_hurt %}承压：{{ s.who_may_be_hurt | join(', ') }}{% endif %}</p>
+    {% endif %}
   </div>
   {% endfor %}
 </div>
@@ -235,15 +291,21 @@
   <div class="section-title">隔夜真正重要的事</div>
   {% for s in report.top_stories %}
   <div class="card">
-    <div class="item-title">{{ s.title }} <span class="badge badge-neutral">{{ s.importance.value }}</span>
-      <span class="badge {{ 'badge-bullish' if s.evidence_tier.value == 'CONFIRMED' else 'badge-bearish' if s.evidence_tier.value == 'UNCONFIRMED' else 'badge-neutral' }}">{{ s.evidence_tier.value }}</span>
-    </div>
+    <div class="evidence-box evidence-{{ s.evidence_tier.value | lower }}">{{ s.evidence_tier.value | evidence_caption }}</div>
+    <div class="item-title">{{ s.title }} <span class="badge badge-neutral">{{ s.importance.value }}</span></div>
     <p><strong>事实：</strong> {{ s.fact }}</p>
     <p><strong>为什么重要：</strong> {{ s.why_it_matters }}</p>
     {% if s.price_check %}<p><strong>价格验证：</strong> {{ s.price_check | join(', ') }} — {{ s.market_impact }}</p>
     {% elif s.market_impact %}<p><strong>市场反应：</strong> {{ s.market_impact }}</p>{% endif %}
     {% if s.expectation_impact %}<p><strong>预期影响：</strong> {{ s.expectation_impact }}</p>{% endif %}
     {% if s.first_order_effect %}<p><strong>一级影响：</strong> {{ s.first_order_effect }}{% if s.second_order_effect %} &nbsp;|&nbsp; <strong>二级影响：</strong> {{ s.second_order_effect }}{% endif %}</p>{% endif %}
+    {% if s.is_priced_in %}<div class="label">是否已被市场price in</div><p>{{ s.is_priced_in }}</p>{% endif %}
+    {% if s.what_to_watch_next %}<div class="label">下一步关注</div><p>{{ s.what_to_watch_next }}</p>{% endif %}
+    {% if s.what_would_invalidate %}<div class="label">什么会证伪这个判断</div><p>{{ s.what_would_invalidate }}</p>{% endif %}
+    {% if s.who_benefits or s.who_may_be_hurt %}
+    <div class="label">受益 / 承压方</div>
+    <p>{% if s.who_benefits %}受益：{{ s.who_benefits | join(', ') }}{% endif %}{% if s.who_benefits and s.who_may_be_hurt %} &nbsp;|&nbsp; {% endif %}{% if s.who_may_be_hurt %}承压：{{ s.who_may_be_hurt | join(', ') }}{% endif %}</p>
+    {% endif %}
     <div class="label">信息来源</div><p>{{ s.source_names | join(', ') }}</p>
   </div>
   {% endfor %}
@@ -298,10 +360,20 @@
   {% endif %}
 </div>
 
+<!-- 9b. DISLOCATIONS -->
+{% if report.key_dislocations %}
+<div class="section">
+  <div class="section-title">背离 / 值得留意的错位 · Dislocations</div>
+  {% for d in report.key_dislocations %}
+  <div class="dislocation-box">{{ d }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
 <!-- 10. RISK CALENDAR -->
 <div class="section">
   <div class="section-title">今日风险日历</div>
-  <table class="dash risk-cal">
+  <table class="dash risk-cal table-dark">
     <tr><th>事件</th><th>时间</th><th>一致预期</th><th>前值</th><th>重要性</th></tr>
     {% for e in report.macro_events_today %}
     <tr>
@@ -337,7 +409,7 @@
 {% if report.bottom_line %}
 <div class="section">
   <div class="section-title">今日结论一览 · Bottom Line</div>
-  <table class="dash risk-cal">
+  <table class="dash risk-cal table-dark">
     <tr><th>变量</th><th>当前状态</th><th>比昨天</th><th>下一步验证</th></tr>
     {% for row in report.bottom_line %}
     <tr>
@@ -467,6 +539,17 @@
     {% endif %}
   </div>
   {% endif %}
+</div>
+{% endif %}
+
+<!-- SOURCE INDEX -->
+{% if report.source_index %}
+<div class="section">
+  <div class="section-title">信息来源 · Source Index</div>
+  {% set tier_labels = {1: 'Tier 1 · 一手信源', 2: 'Tier 2 · 高质量媒体', 3: 'Tier 3 · 二级媒体', 4: 'Tier 4 · 社媒/传闻'} %}
+  {% for tier_value, srcs in report.source_index | sort(attribute='tier.value') | groupby('tier.value') %}
+  <p style="margin-top:4px;font-size:7.2pt;"><strong>{{ tier_labels.get(tier_value, 'Tier ' ~ tier_value) }}：</strong>{{ srcs | map(attribute='source_name') | unique | join('、') }}</p>
+  {% endfor %}
 </div>
 {% endif %}
 

@@ -38,6 +38,14 @@ confirm or contradict each other under the dominant theme. If rates/VIX/gold/oil
 one clean story today, say so explicitly (e.g. "cross-asset signals are mixed: X points one way, Y \
 points another") rather than forcing a false throughline (Principle 4: avoid false causality).
 
+For key_dislocations: scan INPUT_DATA.themes for cases where a theme's structural_view and \
+tactical_view disagree (e.g. structurally bullish but tactically neutral/bearish), or where its \
+price_confirmation ("确认"/"中性"/"背离"/"数据不足") doesn't match its structural stance (e.g. \
+strongly bullish structurally but price_confirmation is "中性" or "数据不足"). Each is a genuine \
+fundamental-vs-price divergence worth flagging as something to keep watching, NOT a trade call. \
+Return 0-4 short (1 sentence) bullets; return an empty list if nothing meaningfully diverges today \
+- do not manufacture a dislocation where the data doesn't support one.
+
 Return JSON:
 {
   "three_things_that_matter": ["...", "...", "..."]  (exactly 3, ranked by importance),
@@ -46,6 +54,7 @@ Return JSON:
   "dominant_narrative": "2-4 sentences on what the market is actually trading right now (e.g. \
 rates, AI capex, growth, inflation, liquidity, China policy, geopolitics), citing 2-3 specific \
 cross_asset_snapshot numbers - avoid just listing disconnected facts, explain the throughline",
+  "key_dislocations": ["...", ...]  (0-4 bullets, see above - empty list if none today),
   "mental_model": {
     "what_changed": "...",
     "what_did_not_change": "...",
@@ -102,6 +111,7 @@ def synthesize_report(
                 "structural_view": t.structural_view.value,
                 "tactical_view": t.tactical_view.value,
                 "momentum": t.momentum.value,
+                "price_confirmation": t.price_confirmation,
                 "risk": t.risk,
             }
             for t in themes

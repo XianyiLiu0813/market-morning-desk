@@ -665,6 +665,43 @@ def _cross_asset_sentence(cross_asset: List[Dict[str, Any]]) -> str:
     return f"跨资产信号：{('、'.join(bits))}——这几个信号之间是否相互印证，值得继续跟踪，而不是只看单一资产的涨跌。"
 
 
+_BULLISH_VIEWS = ("BULLISH", "SLIGHTLY_BULLISH")
+_BEARISH_VIEWS = ("BEARISH", "SLIGHTLY_BEARISH")
+
+
+def _build_key_dislocations(themes: List[Dict[str, Any]]) -> List[str]:
+    """Part: Dislocations/setups (borrowed from a sample morning note) -
+    deterministic scan for themes whose structural/tactical views disagree,
+    or whose price_confirmation contradicts a strong structural stance.
+    These are flagged as things worth watching, never as trade calls (that
+    judgment stays in trade_analysis.py's Trade/Watch/Pass). Capped at 3 so
+    this stays a short, scannable list rather than a second theme table."""
+    out: List[str] = []
+    for t in themes:
+        name = t.get("name", "")
+        structural = t.get("structural_view")
+        tactical = t.get("tactical_view")
+        price_confirmation = t.get("price_confirmation", "数据不足")
+
+        structural_bull = structural in _BULLISH_VIEWS
+        structural_bear = structural in _BEARISH_VIEWS
+        tactical_bull = tactical in _BULLISH_VIEWS
+        tactical_bear = tactical in _BEARISH_VIEWS
+
+        if structural_bull and tactical_bear:
+            out.append(f"{name}：结构性仍看多，但战术性已转弱——短期价格可能在消化长期逻辑之外的因素，留意是否只是暂时回调。")
+        elif structural_bear and tactical_bull:
+            out.append(f"{name}：结构性偏弱，但战术性转强——若无新的基本面支撑，这更像是情绪/仓位驱动的反弹，而非趋势反转。")
+        elif structural_bull and price_confirmation in ("中性", "数据不足", "背离"):
+            out.append(f"{name}：结构性看多的叙事很强，但价格确认为「{price_confirmation}」——基本面逻辑与实际价格表现之间存在背离，值得继续跟踪而非直接假设兑现。")
+        elif structural_bear and price_confirmation == "确认" and tactical_bull:
+            out.append(f"{name}：价格已经确认走弱，但战术性判断仍偏多——存在判断滞后于价格的风险。")
+
+        if len(out) >= 3:
+            break
+    return out
+
+
 def _editorial_synthesis(data: Dict[str, Any]) -> Dict[str, Any]:
     regime = data.get("regime", {})
     top_stories = data.get("top_stories", [])
@@ -713,6 +750,7 @@ def _editorial_synthesis(data: Dict[str, Any]) -> Dict[str, Any]:
         "main_risk_today": main_risk,
         "one_sentence_summary": regime.get("summary", "本次运行的市场状态摘要不可用。"),
         "dominant_narrative": dominant_narrative,
+        "key_dislocations": _build_key_dislocations(themes),
         "mental_model": {
             "what_changed": three_things[0] if three_things else "现有数据不足以判断。",
             "what_did_not_change": "在没有相反证据的情况下，各主题的结构性判断（Structural View）维持不变。",

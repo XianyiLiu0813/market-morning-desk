@@ -23,6 +23,17 @@ def _badge_class(value: str) -> str:
     return "badge-neutral"
 
 
+_EVIDENCE_CAPTIONS = {
+    "CONFIRMED": "CONFIRMED · 基于一手信源/官方公告或监管文件",
+    "LIKELY": "LIKELY · 基于二级媒体报道，尚待一手来源确认",
+    "UNCONFIRMED": "UNCONFIRMED · 单一或低可信度来源，未经独立验证",
+}
+
+
+def _evidence_caption(tier_value: str) -> str:
+    return _EVIDENCE_CAPTIONS.get(tier_value, tier_value)
+
+
 def _is_missing(value) -> bool:
     """True for None and for NaN/inf - the schema-level guard should already
     prevent NaN from reaching here, but the renderer must never trust that
@@ -66,6 +77,7 @@ def get_env() -> Environment:
     env.filters["bp"] = _fmt_bp
     env.filters["level"] = _fmt_level
     env.filters["badge_class"] = _badge_class
+    env.filters["evidence_caption"] = _evidence_caption
     env.filters["sgt"] = lambda dt, fmt="%H:%M %Z": to_sgt(dt).strftime(fmt) if dt else "—"
     env.tests["missing"] = _is_missing
     return env

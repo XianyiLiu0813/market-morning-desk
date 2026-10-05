@@ -301,6 +301,20 @@ class TraderDashboard(BaseModel):
     liquidity_is_proxy: bool = True
 
 
+class KeyStat(BaseModel):
+    """A single numeric headline card (borrowed from a sample morning note's
+    top-of-page stat grid - e.g. "S&P 500 +0.73% / 7,722.72") - deterministic,
+    computed directly from the validated snapshot in
+    src/analysis/market_state.py::build_key_stats, never invented. Distinct
+    from TraderDashboard: this carries the raw numbers, TraderDashboard
+    carries the interpreted state words."""
+
+    label: str
+    primary: str  # the headline figure, e.g. "+0.73%" or "15.31" or "5.28%"
+    secondary: Optional[str] = None  # supporting figure, e.g. a level or a 2nd change
+    direction: Optional[str] = None  # "pos" | "neg" | None - drives color
+
+
 class ThemeView(BaseModel):
     """V2 (Part 7): a theme's structural (multi-quarter) view and tactical
     (days-to-weeks) view are tracked independently - a great long-term
@@ -604,6 +618,7 @@ class MorningReport(BaseModel):
     timezone: str
 
     dashboard: Optional[TraderDashboard] = None
+    key_stats: List[KeyStat] = Field(default_factory=list)
     regime: MarketRegimeView
     what_changed_overnight: List[str] = Field(default_factory=list)
     bottom_line: List[BottomLineRow] = Field(default_factory=list)
@@ -613,6 +628,7 @@ class MorningReport(BaseModel):
 
     market_snapshot: MarketSnapshot
     dominant_narrative: Optional[str] = None
+    key_dislocations: List[str] = Field(default_factory=list)
 
     macro_events_today: List[MacroEvent] = Field(default_factory=list)
     macro_stories: List[StoryAnalysis] = Field(default_factory=list)
@@ -679,4 +695,5 @@ class EditorialSynthesis(BaseModel):
     main_risk_today: str
     one_sentence_summary: str
     dominant_narrative: str
+    key_dislocations: List[str] = Field(default_factory=list)
     mental_model: MentalModel

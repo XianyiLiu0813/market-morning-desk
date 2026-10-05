@@ -14,9 +14,9 @@ data exists" principle.
 """
 from __future__ import annotations
 
-from typing import Optional
+from typing import List, Optional
 
-from src.models.schemas import MarketSnapshot, TraderDashboard
+from src.models.schemas import KeyStat, MarketSnapshot, TraderDashboard
 
 
 def _g(snapshot: MarketSnapshot, symbol: str) -> Optional[float]:
@@ -118,3 +118,116 @@ def compute_trader_dashboard(snapshot: MarketSnapshot) -> TraderDashboard:
         breadth_is_proxy=True,
         liquidity_is_proxy=True,
     )
+
+
+def _fmt_pct(v: Optional[float]) -> Optional[str]:
+    if v is None:
+        return None
+    sign = "+" if v > 0 else ""
+    return f"{sign}{v:.2f}%"
+
+
+def _fmt_level(v: Optional[float], decimals: int = 2, thousands: bool = False) -> Optional[str]:
+    if v is None:
+        return None
+    fmt = f"{{:,.{decimals}f}}" if thousands else f"{{:.{decimals}f}}"
+    return fmt.format(v)
+
+
+def _fmt_bp(v: Optional[float]) -> Optional[str]:
+    if v is None:
+        return None
+    sign = "+" if v > 0 else ""
+    return f"{sign}{v:.1f}bp"
+
+
+def _direction(v: Optional[float]) -> Optional[str]:
+    if v is None or v == 0:
+        return None
+    return "pos" if v > 0 else "neg"
+
+
+def _index_stat(snapshot: MarketSnapshot, symbol: str, label: str) -> Optional[KeyStat]:
+    asset = snapshot.get(symbol)
+    if asset is None or asset.daily_pct is None:
+        return None
+    return KeyStat(
+        label=label,
+        primary=_fmt_pct(asset.daily_pct),
+        secondary=_fmt_level(asset.last_price, 2, thousands=True),
+        direction=_direction(asset.daily_pct),
+    )
+
+
+def build_key_stats(snapshot: MarketSnapshot) -> List[KeyStat]:
+    """Deterministic "headline numbers" strip (Part: borrowed from a sample
+    morning note's top-of-page stat grid) - the raw figures a trader
+    registers before any interpretation, complementing (not replacing)
+    TraderDashboard's interpreted state words. A card is simply omitted if
+    its underlying asset is missing from the snapshot (never a fabricated
+    "data unavailable" placeholder cluttering this fast-read strip - the
+    detailed 隔夜市场仪表盘 tables further down already carry that)."""
+    stats: List[KeyStat] = []
+
+    for symbol, label in (("^GSPC", "S&P 500"), ("^IXIC", "Nasdaq"), ("^RUT", "Russell 2000")):
+        stat = _index_stat(snapshot, symbol, label)
+        if stat:
+            stats.append(stat)
+
+    vix = snapshot.get("^VIX")
+    if vix is not None and vix.last_price is not None:
+        stats.append(KeyStat(
+            label="VIX",
+            primary=_fmt_level(vix.last_price, 2),
+            secondary=_fmt_pct(vix.daily_pct),
+            direction=_direction(vix.daily_pct),
+        ))
+
+    us2y, us10y, us30y = snapshot.get("US2Y"), snapshot.get("US10Y"), snapshot.get("US30Y")
+    if us10y is not None and us10y.last_price is not None:
+        curve_bits = []
+        if us2y is not None and us2y.last_price is not None:
+            curve_bits.append(f"{us2y.last_price:.2f}")
+        curve_bits.append(f"{us10y.last_price:.2f}")
+        if us30y is not None and us30y.last_price is not None:
+            curve_bits.append(f"{us30y.last_price:.2f}")
+        stats.append(KeyStat(
+            label="美债 2Y/10Y/30Y",
+            primary=" / ".join(curve_bits) + "%",
+            secondary=(f"10Y {_fmt_bp(us10y.bp_change)}" if us10y.bp_change is not None else None),
+            direction=_direction(us10y.bp_change),
+        ))
+
+    real_yield = snapshot.get("US10Y_REAL")
+    if real_yield is not None and real_yield.last_price is not None:
+        breakeven = snapshot.get("US10Y_BREAKEVEN")
+        stats.append(KeyStat(
+            label="10Y 实际收益率",
+            primary=f"{real_yield.last_price:.2f}%",
+            secondary=(
+                f"盈亏平衡通胀 {breakeven.last_price:.2f}%"
+                if breakeven is not None and breakeven.last_price is not None else
+                _fmt_bp(real_yield.bp_change)
+            ),
+            direction=_direction(real_yield.bp_change),
+        ))
+
+    dxy, usdjpy = snapshot.get("DXY"), snapshot.get("USDJPY")
+    if dxy is not None and dxy.last_price is not None:
+        stats.append(KeyStat(
+            label="DXY / USDJPY",
+            primary=f"{dxy.last_price:.2f}" + (f" / {usdjpy.last_price:.2f}" if usdjpy and usdjpy.last_price is not None else ""),
+            secondary=_fmt_pct(dxy.daily_pct),
+            direction=_direction(dxy.daily_pct),
+        ))
+
+    wti, brent = snapshot.get("CL=F"), snapshot.get("BZ=F")
+    if wti is not None and wti.last_price is not None:
+        stats.append(KeyStat(
+            label="WTI / Brent",
+            primary=f"${wti.last_price:.2f}" + (f" / ${brent.last_price:.2f}" if brent and brent.last_price is not None else ""),
+            secondary=_fmt_pct(wti.daily_pct),
+            direction=_direction(wti.daily_pct),
+        ))
+
+    return stats

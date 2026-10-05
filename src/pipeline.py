@@ -26,7 +26,7 @@ from src.analysis.finance_learning import generate_finance_lesson, generate_week
 from src.analysis.learning import generate_educational_content, record_concepts_taught
 from src.analysis.macro_analysis import split_macro_vs_market
 from src.analysis.market_regime import infer_market_regime
-from src.analysis.market_state import compute_trader_dashboard
+from src.analysis.market_state import build_key_stats, compute_trader_dashboard
 from src.analysis.story_analysis import analyze_stories
 from src.analysis.theme_analysis import analyze_themes
 from src.analysis.trade_analysis import generate_trade_ideas
@@ -179,6 +179,7 @@ def run_morning_pipeline(
     # deterministic, computed from the validated snapshot / persisted
     # history, not LLM calls.
     dashboard = compute_trader_dashboard(snapshot)
+    key_stats = build_key_stats(snapshot)
     what_changed_overnight = build_what_changed_overnight(
         run_date, theme_views, [l.value for l in regime.labels], regime.summary, dashboard, snapshot,
     )
@@ -247,6 +248,7 @@ def run_morning_pipeline(
         generated_at=now_utc(),
         timezone=settings.timezone,
         dashboard=dashboard,
+        key_stats=key_stats,
         regime=regime,
         what_changed_overnight=what_changed_overnight,
         bottom_line=bottom_line,
@@ -255,6 +257,7 @@ def run_morning_pipeline(
         one_sentence_summary=synthesis.one_sentence_summary,
         market_snapshot=snapshot,
         dominant_narrative=synthesis.dominant_narrative,
+        key_dislocations=synthesis.key_dislocations,
         macro_events_today=macro_events,
         macro_stories=macro_story_analyses,
         theme_views=theme_views,
