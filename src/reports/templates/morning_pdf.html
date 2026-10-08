@@ -12,7 +12,12 @@
      e.g. GitHub Actions runners after installing fonts-noto-cjk (see
      .github/workflows/morning.yml). macOS/Windows users get PingFang
      SC/Microsoft YaHei via the system-ui fonts already. */
-  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC","Segoe UI",Helvetica,Arial,sans-serif; color:#1a1d23; font-size:8.3pt; line-height:1.36; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC","Segoe UI",Helvetica,Arial,sans-serif; color:#1a1d23; font-size:8.3pt; line-height:1.36; counter-reset:section-num; }
+  /* Sequential section numbers (borrowed from the sample report's 1./2./3.
+     style) - a CSS counter rather than hand-numbered comments so it never
+     drifts out of sync when sections are added/removed/reordered. */
+  .section > .section-title { counter-increment:section-num; }
+  .section > .section-title::before { content:counter(section-num) ". "; }
   h1,h2,h3,p,ul,ol { margin:0; }
   .header { display:flex; justify-content:space-between; align-items:baseline; border-bottom:2px solid #0f1720; padding-bottom:6px; margin-bottom:8px; }
   .header .brand { font-size:14pt; font-weight:800; color:#0f1720; }
@@ -55,9 +60,6 @@
   .risk-cal td { font-size:7pt; }
   .term-name { font-weight:700; }
   .page-break { page-break-before:always; }
-  .theme-card { border-left:3px solid #c7cbd1; }
-  .theme-card.bull { border-left-color:#1e7e34; }
-  .theme-card.bear { border-left-color:#b3261e; }
   /* Trader's Dashboard: 6 small state tiles in a row */
   .state-tile { background:#f7f8fa; border:1px solid #e4e6ea; border-radius:4px; padding:5px 4px; text-align:center; }
   .state-tile .state-label { font-size:6.3pt; color:#6b7280; text-transform:uppercase; letter-spacing:0.3px; }
@@ -65,11 +67,6 @@
   .state-tile .state-value.improve { color:#1e7e34; }
   .state-tile .state-value.worsen { color:#b3261e; }
   .proxy-note { font-size:6.2pt; color:#9aa0a8; margin-top:6px; }
-  /* Exception-based theme table */
-  table.theme-table { width:100%; border-collapse:collapse; font-size:7.3pt; }
-  table.theme-table th { text-align:left; font-size:6.3pt; text-transform:uppercase; color:#6b7280; border-bottom:1px solid #d7dae0; padding:3px 4px; }
-  table.theme-table td { padding:3px 4px; border-bottom:1px solid #eef0f2; vertical-align:top; }
-  .changed-row { background:#fbf6ea; }
   .wct-list { margin:0; padding-left:14px; }
   .wct-list li { margin-bottom:2px; font-size:8pt; }
   /* Key Stats: prominent numeric strip right under the header */
@@ -256,36 +253,6 @@
 </div>
 {% endif %}
 
-<!-- 6. THEME MAP (exception-based: compact table, only changed/notable themes expand) -->
-<div class="section">
-  <div class="section-title">行业与主题地图 · Theme Map</div>
-  <table class="theme-table">
-    <tr><th>主题</th><th>结构性</th><th>战术性</th><th>价格确认</th><th>核心驱动</th></tr>
-    {% for t in report.theme_views %}
-    <tr class="{{ 'changed-row' if t.is_meaningful_change else '' }}">
-      <td>{{ t.theme_name }}</td>
-      <td><span class="badge {{ t.structural_view.value | badge_class }}">{{ t.structural_view.value | replace('_',' ') }}</span></td>
-      <td><span class="badge {{ t.tactical_view.value | badge_class }}">{{ t.tactical_view.value | replace('_',' ') }}</span></td>
-      <td>{{ t.price_confirmation }}</td>
-      <td>{{ t.evidence[0] if t.evidence else '—' }}</td>
-    </tr>
-    {% endfor %}
-  </table>
-  {% set expanded_themes = report.theme_views | selectattr('is_meaningful_change') | list %}
-  {% if expanded_themes %}
-  <div class="grid2" style="margin-top:6px;">
-    {% for t in expanded_themes %}
-    <div class="card theme-card {{ 'bull' if 'BULLISH' in t.structural_view.value else 'bear' if 'BEARISH' in t.structural_view.value else '' }}">
-      <div class="item-title">{{ t.theme_name }}</div>
-      <div class="label">结构性判断（多季度）</div><p>{{ t.structural_reason }}</p>
-      <div class="label">战术性判断（数天至数周）</div><p>{{ t.tactical_reason }}</p>
-      {% if t.risk %}<div class="label">主要风险</div><p>{{ t.risk }}</p>{% endif %}
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-</div>
-
 <!-- 7. WHAT ACTUALLY MATTERED -->
 <div class="section">
   <div class="section-title">隔夜真正重要的事</div>
@@ -437,108 +404,10 @@
 </div>
 {% endif %}
 
-<!-- FINANCE LEARNING LAB (new module, appended - separate from the market report above) -->
-{% if report.finance_lesson or report.weekly_finance_review %}
-<div class="page-break"></div>
+<!-- CFA EXAM COUNTDOWN (Finance Learning Lab trimmed down to just this, per request) -->
+{% if report.exam_countdown %}
 <div class="section">
-  <div class="section-title">今日金融学习 · Finance Learning Lab</div>
-  <div class="sub" style="margin-bottom:5px;">从 CFA 基础到真实市场</div>
-  {% set exam_countdown = (report.weekly_finance_review.exam_countdown if report.weekly_finance_review else report.finance_lesson.exam_countdown) %}
-  {% if exam_countdown %}
-  <div class="risk-box" style="background:#fdf0e8;border-color:#f0c9a8;color:#8a4a1c;font-weight:700;margin-bottom:5px;margin-top:0;">{{ exam_countdown }}</div>
-  {% endif %}
-
-  {% if report.weekly_finance_review %}
-  {% set r = report.weekly_finance_review %}
-  <div class="card">
-    <div class="item-title">{{ r.week_label }}</div>
-    <div class="label">本周知识链</div>
-    <p>{{ r.knowledge_chain | join(' → ') }}</p>
-    <div class="label">知识点之间的联系</div>
-    <p>{{ r.connections_summary }}</p>
-  </div>
-  {% if r.quiz %}
-  <div class="card">
-    <div class="label">本周小测（5题）</div>
-    <ol class="tight" style="padding-left:14px;">
-      {% for q in r.quiz %}<li>{{ q.question }}</li>{% endfor %}
-    </ol>
-    <div class="label" style="margin-top:5px;">答案</div>
-    <ol class="tight" style="padding-left:14px;color:#6b7280;font-size:7.4pt;">
-      {% for q in r.quiz %}<li>{{ q.answer }}</li>{% endfor %}
-    </ol>
-  </div>
-  {% endif %}
-
-  {% elif report.finance_lesson %}
-  {% set l = report.finance_lesson %}
-  <div class="card">
-    <div class="item-title">
-      {{ l.topic_name }}（{{ l.topic_id }}）
-      <span class="badge {{ 'badge-bullish' if l.track.value == 'CFA_FOUNDATION' else 'badge-neutral' }}">
-        {{ 'TRACK A · CFA FOUNDATION' if l.track.value == 'CFA_FOUNDATION' else 'TRACK B · BEYOND CFA' }}
-      </span>
-      <span class="badge badge-neutral">{{ l.difficulty.value | upper }}</span>
-    </div>
-    {% if l.progress_label %}<p style="color:#6b7280;font-size:7.2pt;">{{ l.progress_label }}</p>{% endif %}
-    {% if l.review_recap %}<div class="risk-box" style="background:#eef4fb;border-color:#c9dcf0;color:#2c5a86;">{{ l.review_recap }}</div>{% endif %}
-
-    <div class="label">一句话先讲明白</div>
-    <p><strong>{{ l.one_liner }}</strong></p>
-
-    <div class="label">核心概念</div>
-    <p>{{ l.core_concept }}</p>
-
-    <div class="label">一个简单例子</div>
-    <p>{{ l.worked_example }}</p>
-
-    <div class="label">为什么投资者关心？</div>
-    <p>{{ l.why_investors_care }}</p>
-
-    {% if l.market_connection %}
-    <div class="label">和真实市场有什么关系？</div>
-    <p>{{ l.market_connection }}</p>
-    {% endif %}
-
-    {% if l.common_mistake %}
-    <div class="risk-box"><strong>Junior Analyst 常见误区：</strong> {{ l.common_mistake }}</div>
-    {% endif %}
-  </div>
-
-  {% if l.key_takeaways %}
-  <div class="card">
-    <div class="label">你应该记住的几件事</div>
-    <ol class="tight" style="padding-left:14px;">
-      {% for t in l.key_takeaways %}<li>{{ t }}</li>{% endfor %}
-    </ol>
-  </div>
-  {% endif %}
-
-  {% if l.quiz %}
-  <div class="card">
-    <div class="label">自测题</div>
-    <ol class="tight" style="padding-left:14px;">
-      {% for q in l.quiz %}<li>{{ q.question }}</li>{% endfor %}
-    </ol>
-    <div class="label" style="margin-top:5px;">答案</div>
-    <ol class="tight" style="padding-left:14px;color:#6b7280;font-size:7.4pt;">
-      {% for q in l.quiz %}<li>{{ q.answer }}</li>{% endfor %}
-    </ol>
-  </div>
-  {% endif %}
-
-  <div class="grid3">
-    {% if l.cfa_connection %}
-    <div><div class="label">CFA Connection</div><p style="font-size:7.4pt;">{{ l.cfa_connection | join(', ') }}</p></div>
-    {% endif %}
-    {% if l.beyond_cfa_note %}
-    <div><div class="label">Beyond CFA</div><p style="font-size:7.4pt;">{{ l.beyond_cfa_note }}</p></div>
-    {% endif %}
-    {% if l.where_used %}
-    <div><div class="label">Where It's Used</div><p style="font-size:7.4pt;">{{ l.where_used | join(', ') }}</p></div>
-    {% endif %}
-  </div>
-  {% endif %}
+  <div class="risk-box" style="background:#fdf0e8;border-color:#f0c9a8;color:#8a4a1c;font-weight:700;text-align:center;margin-top:0;">{{ report.exam_countdown }}</div>
 </div>
 {% endif %}
 

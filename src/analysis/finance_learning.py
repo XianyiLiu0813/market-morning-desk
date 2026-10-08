@@ -188,6 +188,15 @@ def days_until_exam(settings: Settings, run_date: date) -> Optional[int]:
     return delta if delta >= 0 else None
 
 
+def get_exam_countdown(settings: Settings, run_date: date) -> Optional[str]:
+    """Public entry point for just the exam countdown line, with none of
+    generate_finance_lesson's/generate_weekly_review's LLM call or
+    record_topic_taught side effect - for when the report wants to show
+    the countdown without running (or silently advancing progress through)
+    the daily lesson."""
+    return _exam_countdown_label(settings, run_date)
+
+
 def due_for_review(settings: Settings, run_date: date) -> Optional[FinanceLearningProgressRow]:
     """Part 9: the single most-overdue previously-taught topic, if any, for
     a 30-second recap prepended to today's lesson."""

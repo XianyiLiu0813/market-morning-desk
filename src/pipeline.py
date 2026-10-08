@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional
 from src.analysis.change_detection import build_bottom_line, build_what_changed_overnight
 from src.analysis.company_analysis import analyze_companies
 from src.analysis.editor import synthesize_report
-from src.analysis.finance_learning import generate_finance_lesson, generate_weekly_review
+from src.analysis.finance_learning import get_exam_countdown
 from src.analysis.learning import generate_educational_content, record_concepts_taught
 from src.analysis.macro_analysis import split_macro_vs_market
 from src.analysis.market_regime import infer_market_regime
@@ -191,27 +191,16 @@ def run_morning_pipeline(
         prior_ideas = get_prior_trade_ideas(run_date)
         yesterday_items = build_review(prior_ideas, assets_by_symbol)
 
-    # 7b. Finance Learning Lab (new module, appended to the report - does
-    # not touch any market-analysis module above). Exactly one of
-    # finance_lesson / weekly_finance_review is set; both stay None if the
-    # module is disabled in config/finance_curriculum.yaml or the
-    # curriculum has nothing ready to teach.
+    # 7b. Finance Learning Lab: the report currently only shows the exam
+    # countdown (Xianyi asked to drop the daily lesson/quiz content) - so
+    # we deliberately do NOT call generate_finance_lesson/
+    # generate_weekly_review here any more. That also means
+    # record_topic_taught() never fires while the lesson is hidden, so
+    # curriculum progress stays exactly where it was instead of silently
+    # advancing through content nobody sees.
     finance_lesson = None
     weekly_finance_review = None
-    try:
-        weekly_finance_review = generate_weekly_review(llm, settings, run_date)
-        if weekly_finance_review is None:
-            finance_lesson = generate_finance_lesson(llm, settings, run_date, regime=regime, top_stories=top_story_analyses)
-        else:
-            llm_calls += 1
-        if finance_lesson is not None:
-            llm_calls += 1
-    except Exception as exc:  # noqa: BLE001
-        # The Finance Learning Lab is an addition, not a core deliverable -
-        # a failure here must never take down the rest of the morning
-        # report (Section 27: one non-critical module failing shouldn't
-        # crash the pipeline).
-        logger.error("Finance Learning Lab generation failed (non-fatal): %s", exc)
+    exam_countdown = get_exam_countdown(settings, run_date)
 
     # 8. Data quality gate (Section 34) + V2 Part 32 validation pass. The
     # validation pass can drop/downgrade individual items (e.g. a LOW-
@@ -273,6 +262,7 @@ def run_morning_pipeline(
         source_index=source_index,
         finance_lesson=finance_lesson,
         weekly_finance_review=weekly_finance_review,
+        exam_countdown=exam_countdown,
     )
 
     # 11. Render HTML (+ compact PDF if that's the configured delivery format)

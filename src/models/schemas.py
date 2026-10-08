@@ -653,6 +653,7 @@ class MorningReport(BaseModel):
     # finance_lesson otherwise) - both None if finance_learning is disabled.
     finance_lesson: Optional[FinanceLesson] = None
     weekly_finance_review: Optional[WeeklyFinanceReview] = None
+    exam_countdown: Optional[str] = None
 
     disclaimer: str = (
         "本报告是一个 AI 辅助的市场研究与学习工具，不构成投资建议（not financial advice）。"
