@@ -46,6 +46,19 @@ fundamental-vs-price divergence worth flagging as something to keep watching, NO
 Return 0-4 short (1 sentence) bullets; return an empty list if nothing meaningfully diverges today \
 - do not manufacture a dislocation where the data doesn't support one.
 
+For three_things_that_matter AND dominant_narrative AND mental_model specifically: INPUT_DATA.top_stories \
+is already ranked by importance - if one of them is clearly the session's dominant catalyst (e.g. a \
+specific company/macro/geopolitical event that the price action and other stories trace back to), \
+NAME IT SPECIFICALLY (the actual headline/event, with its concrete number if one exists - "OpenAI's \
+revenue reported $20bn below prior estimates, hitting NVDA/AVGO" not "AI相关硬件链条出现系统性压力"). \
+A reader should be able to tell from three_things_that_matter alone what specifically happened, not \
+just which sector was affected. Do NOT default to describing a category/theme in the abstract when a \
+concrete top_story exists that explains it - that is the single biggest quality failure mode to avoid. \
+Each mental_model field should be 1-2 concise sentences UNLESS there is a specific catalyst from \
+top_stories worth analyzing in depth for that field - stay short and plain where the day is genuinely \
+unremarkable, don't pad with generic macro language to fill space. Be concise exactly where there's \
+nothing specific to say, and be specific exactly where there is.
+
 Return JSON:
 {
   "three_things_that_matter": ["...", "...", "..."]  (exactly 3, ranked by importance),

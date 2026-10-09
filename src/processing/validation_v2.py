@@ -37,14 +37,32 @@ def enforce_no_low_importance_in_top_stories(stories: List[StoryAnalysis]) -> Tu
     """CHECK 4: a LOW-importance story should not occupy a Top Stories slot
     even if the deterministic pre-filter let its cluster through (e.g. a
     borderline score). Drops rather than just warns, since Top Stories is
-    explicitly meant to be exception-based / high-signal-only."""
+    explicitly meant to be exception-based / high-signal-only.
+
+    Floor: if every single story the LLM saw got rated LOW, dropping all
+    of them would silently render the whole "隔夜真正重要的事" section
+    empty - worse than keeping one borderline item, especially since these
+    stories already passed the deterministic score-based pre-filter
+    (top_news cap) before reaching the LLM at all. `stories` arrives
+    already ranked by that pre-filter score, so "the first one" is the
+    best-ranked candidate - keep it and say why, rather than show nothing."""
     kept, dropped = [], []
     for s in stories:
         if s.importance == ImportanceLevel.LOW:
-            dropped.append(s.title)
+            dropped.append(s)
         else:
             kept.append(s)
-    warnings = [f"已从「隔夜真正重要的事」中移除低重要性条目：{t}" for t in dropped]
+
+    if not kept and dropped:
+        rescued = dropped.pop(0)
+        kept.append(rescued)
+        warnings = [f"已从「隔夜真正重要的事」中移除低重要性条目：{s.title}" for s in dropped]
+        warnings.append(
+            f"「{rescued.title}」被 AI 判定为低重要性，但已通过确定性预筛选排名靠前，"
+            "为避免本节完全空白予以保留。"
+        )
+    else:
+        warnings = [f"已从「隔夜真正重要的事」中移除低重要性条目：{s.title}" for s in dropped]
     return kept, warnings
 
 

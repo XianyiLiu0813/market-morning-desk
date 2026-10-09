@@ -17,6 +17,16 @@ MACRO_KEYWORDS = [
     "jolts", "gdp", "ism", "retail sales", "consumer sentiment", "yield curve",
     "pboc", "china macro", "property sector", "tariff", "geopolitic", "rate cut",
     "rate hike", "interest rate", "auction", "policy rate", "stimulus",
+    # Oil-shock / geopolitical-conflict terms (added after a real miss: an
+    # Iran/Hormuz tanker-attack oil-price shock had no theme match in
+    # config/themes.yaml - which is entirely AI-investing-themed by design
+    # - so it fell into the company/theme-scored "market" bucket instead of
+    # here, where it was structurally disadvantaged against AI-theme
+    # stories. Phrases are deliberately specific (not bare "oil") to avoid
+    # false-positive collisions with unrelated company names, e.g.
+    # "Oil-Dri Corporation" earnings reports.
+    "oil price", "crude oil", "opec", "strait of hormuz", "oil tanker",
+    "tanker attack", "brent crude", "wti crude", "iran", "sanctions",
 ]
 
 

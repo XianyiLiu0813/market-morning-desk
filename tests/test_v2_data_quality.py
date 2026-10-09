@@ -5,9 +5,17 @@ from __future__ import annotations
 import math
 from datetime import date, datetime, timezone as tz
 
-from src.models.schemas import MarketAsset, MarketSnapshot
+from src.models.schemas import ImportanceLevel, MarketAsset, MarketSnapshot, StoryAnalysis
 from src.processing.quality import check_core_assets, run_quality_checks
+from src.processing.validation_v2 import enforce_no_low_importance_in_top_stories
 from src.reports.renderer import _fmt_bp, _fmt_pct
+
+
+def _story(title: str, importance: ImportanceLevel) -> StoryAnalysis:
+    return StoryAnalysis(
+        cluster_id=title, title=title, importance=importance,
+        fact="fact", why_it_matters="why",
+    )
 
 
 def test_market_asset_coerces_nan_to_none():
@@ -151,3 +159,39 @@ def test_same_cluster_across_two_days_does_not_crash(tmp_db):
 
     with get_session() as session:
         session.add(NewsClusterRow(cluster_id="cl_dup", run_date=date(2026, 9, 12), title="Same cluster"))
+
+
+def test_enforce_no_low_importance_keeps_best_when_all_rated_low():
+    """Regression: a real production run had all top-5 score-ranked story
+    candidates come back LOW from the LLM (correlated with empty
+    price_check on stories whose tickers weren't resolved - see
+    test_theme_mapping.py's alias-matching tests) and this check dropped
+    every single one, silently rendering "隔夜真正重要的事" completely
+    empty. Must keep at least the best-ranked candidate instead."""
+    stories = [
+        _story("Top story by score", ImportanceLevel.LOW),
+        _story("Second story", ImportanceLevel.LOW),
+        _story("Third story", ImportanceLevel.LOW),
+    ]
+    kept, warnings = enforce_no_low_importance_in_top_stories(stories)
+    assert len(kept) == 1
+    assert kept[0].title == "Top story by score"
+    assert any("为避免本节完全空白予以保留" in w for w in warnings)
+
+
+def test_enforce_no_low_importance_normal_partial_drop_unaffected():
+    stories = [
+        _story("Good story", ImportanceLevel.HIGH),
+        _story("Weak story", ImportanceLevel.LOW),
+        _story("Medium story", ImportanceLevel.MEDIUM),
+    ]
+    kept, warnings = enforce_no_low_importance_in_top_stories(stories)
+    assert [s.title for s in kept] == ["Good story", "Medium story"]
+    assert any("Weak story" in w for w in warnings)
+    assert not any("为避免本节完全空白予以保留" in w for w in warnings)
+
+
+def test_enforce_no_low_importance_empty_input_stays_empty():
+    kept, warnings = enforce_no_low_importance_in_top_stories([])
+    assert kept == []
+    assert warnings == []

@@ -38,20 +38,29 @@ def build_keyword_index(settings: Settings) -> Dict[str, List[Pattern[str]]]:
 
 
 def build_ticker_index(settings: Settings) -> List[Tuple[str, Pattern[str]]]:
-    """List of (ticker, compiled pattern-for-its-bare-symbol). HK-style
-    tickers like "9988.HK" are matched on the bare numeric/alpha part only
-    - the ".HK" suffix essentially never appears verbatim in English prose,
-    so matching just the bare part (still word-boundary anchored) is the
-    practical choice; a false positive on a 4+ digit HK stock code inside
-    ordinary text is rare enough to accept for V1."""
+    """List of (ticker, compiled pattern) entries. Matches the bare ticker
+    symbol itself (HK-style tickers like "9988.HK" match on the bare
+    numeric/alpha part only - the ".HK" suffix essentially never appears
+    verbatim in English prose, so matching just the bare part, still
+    word-boundary anchored, is the practical choice; a false positive on a
+    4+ digit HK stock code inside ordinary text is rare enough to accept
+    for V1), PLUS the company's `name` and any `aliases` from
+    config/watchlist.yaml - news prose overwhelmingly refers to companies
+    by name ("Micron", "Nvidia", "Samsung"), not by raw ticker, so
+    ticker-only matching was silently missing most real coverage."""
     out: List[Tuple[str, Pattern[str]]] = []
     for group in settings.watchlist.values():
         for entry in group:
             ticker = entry["ticker"]
             bare = ticker.split(".")[0]
-            if not bare:
-                continue
-            out.append((ticker, _word_boundary_pattern(bare)))
+            if bare:
+                out.append((ticker, _word_boundary_pattern(bare)))
+            name = entry.get("name")
+            if name:
+                out.append((ticker, _word_boundary_pattern(name)))
+            for alias in entry.get("aliases", []):
+                if alias:
+                    out.append((ticker, _word_boundary_pattern(alias)))
     return out
 
 
