@@ -37,12 +37,33 @@ YAHOO_SYMBOL_MAP = {
 # (Part 4) - see MarketAsset.is_rate / MarketAsset.bp_change.
 RATE_SYMBOLS = {"US2Y", "US10Y", "US30Y", "US2S10S"}
 
+# Symbols that trade nearly 24 hours (commodity futures, FX, crypto) rather
+# than a defined regular session - the regularMarketPrice/
+# regularMarketPreviousClose preference below is WRONG for these: by the
+# time the SGT morning run fires, Yahoo's quote feed has typically already
+# rolled "previousClose" forward to the session that just closed and
+# "regularMarketPrice" into the NEXT session's partial move, so the
+# computed daily_pct ends up measuring "today's partial move so far" rather
+# than "yesterday's full session vs the day before" - which silently
+# flips the sign/magnitude on a day with a big overnight move (verified
+# empirically: CL=F showed -0.6% to -1.0% via regularMarketPrice on a day
+# its actual closed session was +3.6%, confirmed against history()'s daily
+# bar and an independent source). history()'s daily OHLC bar is anchored to
+# the exchange's calendar trading day and stays correct for these symbols,
+# so skip the "fix" entirely for this group and keep the original
+# history()-based close.
+CONTINUOUS_TRADING_SYMBOLS = {
+    "DXY", "USDCNH", "USDJPY",
+    "GC=F", "SI=F", "CL=F", "BZ=F", "HG=F",
+    "BTC-USD", "ETH-USD",
+}
+
 
 class YFinanceMarketDataProvider(MarketDataProvider):
     name = "yfinance"
 
     @retry_with_backoff(max_attempts=3, exceptions=(Exception,))
-    def get_snapshot(self, symbols: List[str]) -> List[MarketAsset]:
+    def get_snapshot(self, symbols: List[str], run_date=None) -> List[MarketAsset]:
         import yfinance as yf
 
         out: List[MarketAsset] = []
@@ -74,6 +95,16 @@ class YFinanceMarketDataProvider(MarketDataProvider):
                 # second line of defense in case a provider misbehaves in
                 # some other way.
                 hist = hist.dropna(subset=["Close"])
+                if run_date is not None and original_sym in CONTINUOUS_TRADING_SYMBOLS:
+                    # Near-24h instruments (commodity futures, FX, crypto)
+                    # can already have a same-day in-progress bar by the
+                    # time the SGT morning run fires (unlike equities/
+                    # yields, which have a defined session that's still
+                    # closed at that hour) - keep only rows strictly
+                    # before run_date so "last" lands on the session that
+                    # actually closed before this report went out, not a
+                    # partial bar for the day still in progress.
+                    hist = hist[hist.index.date < run_date]
                 if hist.empty:
                     continue
                 last = hist.iloc[-1]
@@ -97,15 +128,16 @@ class YFinanceMarketDataProvider(MarketDataProvider):
                 # correction step itself break an otherwise-good row: any
                 # failure here just falls back to the history()-based
                 # values above, silently.
-                try:
-                    info = t.info
-                    regular_price = info.get("regularMarketPrice")
-                    regular_prev_close = info.get("regularMarketPreviousClose")
-                    if regular_price is not None and regular_prev_close is not None:
-                        last_price = float(regular_price)
-                        previous_close = float(regular_prev_close)
-                except Exception as info_exc:  # noqa: BLE001
-                    logger.debug("regularMarketPrice lookup failed for %s, using history()-based close: %s", original_sym, info_exc)
+                if original_sym not in CONTINUOUS_TRADING_SYMBOLS:
+                    try:
+                        info = t.info
+                        regular_price = info.get("regularMarketPrice")
+                        regular_prev_close = info.get("regularMarketPreviousClose")
+                        if regular_price is not None and regular_prev_close is not None:
+                            last_price = float(regular_price)
+                            previous_close = float(regular_prev_close)
+                    except Exception as info_exc:  # noqa: BLE001
+                        logger.debug("regularMarketPrice lookup failed for %s, using history()-based close: %s", original_sym, info_exc)
 
                 daily_pct = (
                     (last_price - previous_close) / previous_close * 100

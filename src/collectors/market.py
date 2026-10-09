@@ -60,7 +60,7 @@ def collect_market_snapshot(
 
     warnings: List[str] = []
     try:
-        assets = provider.get_snapshot(symbols)
+        assets = provider.get_snapshot(symbols, run_date)
     except Exception as exc:  # noqa: BLE001
         logger.error("Market data provider %s failed entirely: %s", provider.name, exc)
         assets = []

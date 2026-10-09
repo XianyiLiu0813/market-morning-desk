@@ -30,7 +30,7 @@ class MockMarketDataProvider(MarketDataProvider):
         with open(fixture_path, "r", encoding="utf-8") as f:
             self._data: Dict[str, Any] = json.load(f)
 
-    def get_snapshot(self, symbols: List[str]) -> List[MarketAsset]:
+    def get_snapshot(self, symbols: List[str], run_date=None) -> List[MarketAsset]:
         out: List[MarketAsset] = []
         as_of = now_utc()
         for sym in symbols:

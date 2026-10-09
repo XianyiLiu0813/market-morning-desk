@@ -15,7 +15,7 @@ from src.providers.news_base import NewsProvider
 class AlwaysFailsMarketProvider(MarketDataProvider):
     name = "broken_market"
 
-    def get_snapshot(self, symbols):
+    def get_snapshot(self, symbols, run_date=None):
         raise ConnectionError("simulated outage")
 
 
