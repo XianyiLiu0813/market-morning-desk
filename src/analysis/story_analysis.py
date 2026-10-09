@@ -111,7 +111,14 @@ def analyze_stories(
             }
         )
     input_data = {"clusters": payload}
-    result = call_llm_json(llm, TASK, INSTRUCTIONS, input_data, StoryAnalysisList)
+    # Each story carries ~12 fields of Chinese prose (fact, why_it_matters,
+    # market_impact, first/second_order_effect, who_benefits/who_may_be_hurt,
+    # is_priced_in, what_to_watch_next, what_would_invalidate...) - a batch
+    # of up to top_news=5 clusters can comfortably exceed call_llm_json's
+    # 4096-token default, truncating the JSON mid-string (confirmed in
+    # production: "Unterminated string..." parse failure, which silently
+    # emptied the entire Top Stories section). Give this task real headroom.
+    result = call_llm_json(llm, TASK, INSTRUCTIONS, input_data, StoryAnalysisList, max_tokens=8192)
     if result is not None:
         stories = result.stories
         # Belt-and-suspenders: force price_check to the deterministic value
