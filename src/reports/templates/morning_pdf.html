@@ -180,7 +180,34 @@
   {% endif %}
 </div>
 
-<!-- 3b. MENTAL MODEL -->
+<!-- 3b. WHAT ACTUALLY MATTERED (moved right after the headline summary - these
+     ARE the "three things that matter", in full depth, read right after them
+     instead of being deferred many sections later) -->
+<div class="section">
+  <div class="section-title">隔夜真正重要的事 · 详细解读</div>
+  {% for s in report.top_stories %}
+  <div class="card">
+    <div class="evidence-box evidence-{{ s.evidence_tier.value | lower }}">{{ s.evidence_tier.value | evidence_caption }}</div>
+    <div class="item-title">{{ s.title }} <span class="badge badge-neutral">{{ s.importance.value }}</span></div>
+    <p><strong>事实：</strong> {{ s.fact }}</p>
+    <p><strong>为什么重要：</strong> {{ s.why_it_matters }}</p>
+    {% if s.price_check %}<p><strong>价格验证：</strong> {{ s.price_check | join(', ') }} — {{ s.market_impact }}</p>
+    {% elif s.market_impact %}<p><strong>市场反应：</strong> {{ s.market_impact }}</p>{% endif %}
+    {% if s.expectation_impact %}<p><strong>预期影响：</strong> {{ s.expectation_impact }}</p>{% endif %}
+    {% if s.first_order_effect %}<p><strong>一级影响：</strong> {{ s.first_order_effect }}{% if s.second_order_effect %} &nbsp;|&nbsp; <strong>二级影响：</strong> {{ s.second_order_effect }}{% endif %}</p>{% endif %}
+    {% if s.is_priced_in %}<div class="label">是否已被市场price in</div><p>{{ s.is_priced_in }}</p>{% endif %}
+    {% if s.what_to_watch_next %}<div class="label">下一步关注</div><p>{{ s.what_to_watch_next }}</p>{% endif %}
+    {% if s.what_would_invalidate %}<div class="label">什么会证伪这个判断</div><p>{{ s.what_would_invalidate }}</p>{% endif %}
+    {% if s.who_benefits or s.who_may_be_hurt %}
+    <div class="label">受益 / 承压方</div>
+    <p>{% if s.who_benefits %}受益：{{ s.who_benefits | join(', ') }}{% endif %}{% if s.who_benefits and s.who_may_be_hurt %} &nbsp;|&nbsp; {% endif %}{% if s.who_may_be_hurt %}承压：{{ s.who_may_be_hurt | join(', ') }}{% endif %}</p>
+    {% endif %}
+    <div class="label">信息来源</div><p>{{ s.source_names | join(', ') }}</p>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- 3c. MENTAL MODEL -->
 {% if report.mental_model %}
 <div class="section">
   <div class="section-title">分析师思维模型 · Mental Model</div>
@@ -252,31 +279,6 @@
   {% endfor %}
 </div>
 {% endif %}
-
-<!-- 7. WHAT ACTUALLY MATTERED -->
-<div class="section">
-  <div class="section-title">隔夜真正重要的事</div>
-  {% for s in report.top_stories %}
-  <div class="card">
-    <div class="evidence-box evidence-{{ s.evidence_tier.value | lower }}">{{ s.evidence_tier.value | evidence_caption }}</div>
-    <div class="item-title">{{ s.title }} <span class="badge badge-neutral">{{ s.importance.value }}</span></div>
-    <p><strong>事实：</strong> {{ s.fact }}</p>
-    <p><strong>为什么重要：</strong> {{ s.why_it_matters }}</p>
-    {% if s.price_check %}<p><strong>价格验证：</strong> {{ s.price_check | join(', ') }} — {{ s.market_impact }}</p>
-    {% elif s.market_impact %}<p><strong>市场反应：</strong> {{ s.market_impact }}</p>{% endif %}
-    {% if s.expectation_impact %}<p><strong>预期影响：</strong> {{ s.expectation_impact }}</p>{% endif %}
-    {% if s.first_order_effect %}<p><strong>一级影响：</strong> {{ s.first_order_effect }}{% if s.second_order_effect %} &nbsp;|&nbsp; <strong>二级影响：</strong> {{ s.second_order_effect }}{% endif %}</p>{% endif %}
-    {% if s.is_priced_in %}<div class="label">是否已被市场price in</div><p>{{ s.is_priced_in }}</p>{% endif %}
-    {% if s.what_to_watch_next %}<div class="label">下一步关注</div><p>{{ s.what_to_watch_next }}</p>{% endif %}
-    {% if s.what_would_invalidate %}<div class="label">什么会证伪这个判断</div><p>{{ s.what_would_invalidate }}</p>{% endif %}
-    {% if s.who_benefits or s.who_may_be_hurt %}
-    <div class="label">受益 / 承压方</div>
-    <p>{% if s.who_benefits %}受益：{{ s.who_benefits | join(', ') }}{% endif %}{% if s.who_benefits and s.who_may_be_hurt %} &nbsp;|&nbsp; {% endif %}{% if s.who_may_be_hurt %}承压：{{ s.who_may_be_hurt | join(', ') }}{% endif %}</p>
-    {% endif %}
-    <div class="label">信息来源</div><p>{{ s.source_names | join(', ') }}</p>
-  </div>
-  {% endfor %}
-</div>
 
 <!-- 7b. OTHER DEVELOPMENTS -->
 {% if report.other_developments %}
