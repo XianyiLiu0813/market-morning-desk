@@ -12,8 +12,12 @@ name: Market Morning Desk
 # `schedule` block together if you change the target send time.
 
 on:
-  schedule:
-    - cron: "30 23 * * *"
+  # PAUSED (2026-11-11, at Xianyi's request) - daily cron disabled, no more
+  # automatic emails. To resume, uncomment the `schedule` block below.
+  # workflow_dispatch (manual run from the Actions tab or the API) still
+  # works in the meantime if a one-off report is ever wanted.
+  # schedule:
+  #   - cron: "30 23 * * *"
   workflow_dispatch:
     inputs:
       mock_mode:
